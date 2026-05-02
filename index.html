@@ -1,0 +1,2614 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Parts Request Dashboard</title>
+  <script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <style>
+    /* ── CONFIGURATION BANNER ───────────────────────────── */
+    #config-banner {
+      display: none;
+      position: fixed; inset: 0; z-index: 9999;
+      background: #0f172a; color: #f1f5f9;
+      align-items: center; justify-content: center;
+      font-family: 'Courier New', monospace;
+    }
+    #config-banner.show { display: flex; }
+    #config-inner {
+      background: #1e293b; border: 1px solid #334155;
+      border-radius: 12px; padding: 40px 48px; max-width: 520px; width: 90%;
+      box-shadow: 0 24px 64px rgba(0,0,0,0.6);
+    }
+    #config-inner h2 { margin: 0 0 8px; font-size: 20px; color: #f8fafc; }
+    #config-inner p  { margin: 0 0 24px; font-size: 13px; color: #94a3b8; line-height: 1.6; }
+    .cfg-field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; }
+    .cfg-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; color: #64748b; }
+    .cfg-input {
+      padding: 9px 13px; border-radius: 8px; border: 1px solid #334155;
+      background: #0f172a; color: #f1f5f9; font-size: 13px;
+      font-family: 'Courier New', monospace; outline: none;
+      transition: border-color 0.15s;
+    }
+    .cfg-input:focus { border-color: #3b82f6; }
+    #cfg-save {
+      width: 100%; padding: 11px; margin-top: 8px; border: none; border-radius: 8px;
+      background: #2563eb; color: #fff; font-size: 14px; font-weight: 700; cursor: pointer;
+      transition: background 0.15s;
+    }
+    #cfg-save:hover { background: #1d4ed8; }
+    #cfg-err { color: #f87171; font-size: 12px; margin-top: 8px; min-height: 18px; }
+
+    /* ── LOGIN MODAL ────────────────────────────────────── */
+    #login-backdrop {
+      display: none; position: fixed; inset: 0; z-index: 9000;
+      background: rgba(15,23,42,0.65); backdrop-filter: blur(4px);
+      align-items: center; justify-content: center; padding: 20px;
+    }
+    #login-backdrop.show { display: flex; }
+    #login-modal {
+      background: #fff; border-radius: 20px; width: 100%; max-width: 440px;
+      box-shadow: 0 28px 70px rgba(15,23,42,0.35);
+      animation: modalIn 0.22s ease; overflow: hidden;
+    }
+    #login-modal-header {
+      padding: 22px 26px 16px;
+      border-bottom: 1px solid #e5e7eb;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    #login-modal-title { font-size: 17px; font-weight: 700; color: #111827; }
+    .login-role-tabs {
+      display: flex; gap: 6px; padding: 16px 26px 0;
+    }
+    .login-role-tab {
+      flex: 1; padding: 9px 0; border-radius: 10px; border: 2px solid #e5e7eb;
+      background: #f9fafb; font-size: 13px; font-weight: 700; cursor: pointer;
+      color: #6b7280; transition: all 0.15s; text-align: center;
+    }
+    .login-role-tab.active.tech  { border-color: #3b82f6; background: #eff6ff; color: #1d4ed8; }
+    .login-role-tab.active.advisor { border-color: #22c55e; background: #f0fdf4; color: #15803d; }
+    #login-modal-body { padding: 18px 26px 22px; display: flex; flex-direction: column; gap: 14px; }
+    .login-field { display: flex; flex-direction: column; gap: 5px; }
+    .login-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: #374151; }
+    .login-search-wrap { position: relative; }
+    .login-search-input {
+      width: 100%; padding: 10px 12px 10px 34px; border-radius: 10px;
+      border: 1.5px solid #e5e7eb; background: #f9fafb url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='13' height='13' viewBox='0 0 24 24' fill='none' stroke='%239ca3af' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='M21 21l-4.35-4.35'/%3E%3C/svg%3E") no-repeat 10px center;
+      color: #111827; font-size: 14px; font-family: inherit; outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .login-search-input:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.12); background-color: #fff; }
+    .login-search-dropdown {
+      display: none; position: absolute; top: calc(100% + 4px); left: 0; right: 0;
+      background: #fff; border: 1.5px solid #e5e7eb; border-radius: 10px;
+      box-shadow: 0 8px 24px rgba(15,23,42,0.14); z-index: 300; max-height: 200px; overflow-y: auto;
+    }
+    .login-search-dropdown.open { display: block; }
+    .login-search-option { padding: 9px 13px; font-size: 14px; cursor: pointer; transition: background 0.1s; }
+    .login-search-option:hover, .login-search-option.highlighted { background: #eff6ff; color: #1d4ed8; }
+    .login-search-option.no-match { color: #9ca3af; cursor: default; font-style: italic; }
+    .login-selected-badge {
+      display: none; align-items: center; gap: 6px; margin-top: 5px;
+      padding: 5px 12px; border-radius: 999px; font-size: 12px; font-weight: 600;
+    }
+    .login-selected-badge.tech-badge { background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; }
+    .login-selected-badge.advisor-badge { background: #f0fdf4; color: #15803d; border: 1px solid #bbf7d0; }
+    .login-pw-input {
+      width: 100%; padding: 10px 12px; border-radius: 10px;
+      border: 1.5px solid #e5e7eb; background: #f9fafb;
+      color: #111827; font-size: 14px; font-family: inherit; outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .login-pw-input:focus { border-color: #22c55e; box-shadow: 0 0 0 3px rgba(34,197,94,0.12); background: #fff; }
+    #login-err { font-size: 12px; color: #dc2626; min-height: 16px; }
+    #login-submit-btn {
+      width: 100%; padding: 11px; border: none; border-radius: 10px;
+      font-size: 14px; font-weight: 700; cursor: pointer;
+      transition: background 0.15s, transform 0.1s;
+    }
+    #login-submit-btn.tech-btn   { background: #2563eb; color: #fff; }
+    #login-submit-btn.tech-btn:hover   { background: #1d4ed8; }
+    #login-submit-btn.advisor-btn { background: #16a34a; color: #fff; }
+    #login-submit-btn.advisor-btn:hover { background: #15803d; }
+    .login-hint { font-size: 11px; color: #9ca3af; text-align: center; margin-top: -6px; }
+
+    /* ── SESSION BAR ────────────────────────────────────── */
+    #session-bar {
+      display: none; align-items: center; gap: 8px;
+      padding: 5px 14px; border-radius: 999px;
+      font-size: 12px; font-weight: 600;
+      box-shadow: 0 2px 6px rgba(15,23,42,0.10);
+    }
+    #session-bar.show { display: flex; }
+    #session-bar.tech-bar    { background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; }
+    #session-bar.advisor-bar { background: #f0fdf4; color: #15803d; border: 1px solid #bbf7d0; }
+    #session-role-icon { font-size: 14px; }
+    #session-name { font-weight: 700; }
+    #session-logout {
+      border: none; background: rgba(0,0,0,0.07); border-radius: 999px;
+      padding: 2px 9px; font-size: 11px; font-weight: 700; cursor: pointer;
+      color: inherit; transition: background 0.12s; margin-left: 2px;
+    }
+    #session-logout:hover { background: rgba(0,0,0,0.14); }
+    #login-open-btn {
+      padding: 6px 16px; border-radius: 999px; border: 1.5px solid #e5e7eb;
+      background: #fff; color: #374151; font-size: 12px; font-weight: 700;
+      cursor: pointer; box-shadow: 0 2px 6px rgba(15,23,42,0.08);
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    #login-open-btn:hover { border-color: #3b82f6; color: #2563eb; }
+
+    /* ── BASE ───────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #f3f4f6;
+      --surface:   #ffffff;
+      --border:    #e5e7eb;
+      --text:      #111827;
+      --text-sub:  #6b7280;
+      --text-muted:#9ca3af;
+      --blue:      #2563eb;
+      --green:     #22c55e;
+      --amber:     #f59e0b;
+      --red:       #ef4444;
+      --purple:    #a855f7;
+      --shadow-sm: 0 2px 6px rgba(15,23,42,0.10);
+      --shadow-md: 0 8px 22px rgba(15,23,42,0.18);
+      --shadow-lg: 0 14px 36px rgba(15,23,42,0.28);
+      --radius:    14px;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg); color: var(--text);
+      padding: 20px; min-height: 100vh;
+    }
+
+    /* ── TOP BAR ────────────────────────────────────────── */
+    .top-bar {
+      display: flex; flex-direction: column;
+      gap: 8px; margin-bottom: 14px;
+    }
+    .top-bar-row1 {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 10px; flex-wrap: wrap;
+    }
+    .top-bar-row2 {
+      display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+    }
+    .top-bar-left  { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .top-bar-right {
+      display: flex; flex-direction: column; align-items: flex-end; gap: 4px; flex-shrink: 0;
+    }
+    .top-bar-right-row { display: flex; align-items: center; gap: 6px; }
+    .dashboard-credit {
+      font-size: 10px; color: #9ca3af; font-weight: 500; white-space: nowrap;
+    }
+    .zoom-controls {
+      display: flex; align-items: center; gap: 4px;
+    }
+    .zoom-btn {
+      width: 26px; height: 26px; border-radius: 7px;
+      border: 1.5px solid var(--border); background: var(--surface);
+      color: #374151; font-size: 15px; font-weight: 700;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      transition: all 0.12s; line-height: 1; flex-shrink: 0;
+    }
+    .zoom-btn:hover { background: #eff6ff; border-color: #93c5fd; color: #2563eb; }
+    .zoom-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+    .zoom-level {
+      font-size: 11px; font-weight: 700; color: var(--text-sub);
+      min-width: 34px; text-align: center; white-space: nowrap;
+    }
+
+
+
+    /* ── TABS & FILTER ──────────────────────────────────── */
+    .tab-btn {
+      border: none; border-radius: 999px; padding: 8px 20px;
+      font-size: 13px; font-weight: 600; cursor: pointer;
+      background: var(--surface); color: #374151;
+      box-shadow: var(--shadow-sm);
+      transition: background 0.15s, color 0.15s, box-shadow 0.15s;
+    }
+    .tab-btn.active {
+      background: var(--blue); color: #fff;
+      box-shadow: 0 4px 14px rgba(37,99,235,0.35);
+    }
+
+    .filter-label { font-size: 13px; font-weight: 600; color: var(--text-sub); white-space: nowrap; }
+    .filter-select, .date-preset-select {
+      padding: 6px 12px; border-radius: 999px;
+      border: 1px solid var(--border); background: var(--surface);
+      color: var(--text); font-size: 13px; font-weight: 600; cursor: pointer;
+      box-shadow: var(--shadow-sm); outline: none;
+    }
+    .filter-select:focus, .date-preset-select:focus {
+      border-color: var(--blue); box-shadow: 0 0 0 2px rgba(37,99,235,0.15);
+    }
+    .custom-date-inputs { display: none; align-items: center; gap: 6px; }
+    .custom-date-inputs.visible { display: flex; }
+    .date-input {
+      padding: 6px 10px; border-radius: 999px; border: 1px solid var(--border);
+      background: var(--surface); color: var(--text); font-size: 13px;
+      cursor: pointer; outline: none;
+    }
+    .date-input:focus { border-color: var(--blue); }
+    .date-sep { font-size: 13px; color: var(--text-sub); font-weight: 600; }
+
+
+
+    /* ── BOARD ──────────────────────────────────────────── */
+    .board {
+      display: grid;
+      grid-template-columns: 1fr 1fr 0.85fr;
+      gap: 18px;
+    }
+    .column { padding: 0 4px; }
+    .column-inner { display: flex; flex-direction: column; gap: 8px; }
+
+    .column-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 12px 22px; border-radius: var(--radius); color: #fff;
+      font-weight: 700; box-shadow: 0 8px 24px rgba(15,23,42,0.30);
+    }
+    .column-title { font-size: 14px; letter-spacing: 0.12em; text-transform: uppercase; }
+    .badge {
+      width: 28px; height: 28px; border-radius: 999px;
+      background: rgba(255,255,255,0.85); color: #374151;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px; font-weight: 700;
+    }
+
+    .column[data-status="Done"]        .column-header { background: var(--green); }
+    .column[data-status="In Process"]  .column-header { background: var(--amber); }
+    .column[data-status="New Request"] .column-header { background: var(--blue); }
+
+    .cards {
+      display: flex; flex-direction: column; gap: 14px;
+      padding: 4px 4px 8px; max-height: calc(100vh - 170px);
+      overflow-y: auto; overflow-x: hidden;
+    }
+    .cards::-webkit-scrollbar { width: 4px; }
+    .cards::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 4px; }
+
+    .empty { font-size: 14px; color: var(--text-sub); margin: 8px 4px; }
+
+    /* ── CARD ───────────────────────────────────────────── */
+    .card {
+      background: var(--surface); border-radius: 16px; padding: 16px 20px 18px;
+      border: 1.5px solid var(--border); display: flex; flex-direction: column; gap: 8px;
+      position: relative; cursor: grab; width: 100%;
+      box-shadow: var(--shadow-md);
+      transition: border-color 0.15s, box-shadow 0.15s, transform 0.12s;
+    }
+    .card.dragging { opacity: 0.6; }
+    .card:hover { box-shadow: var(--shadow-lg); transform: translateY(-2px); }
+
+    .card[data-card-status="Completed"] {
+      background: #f0fdf4; border-color: #bbf7d0;
+      box-shadow: 0 8px 22px rgba(34,197,94,0.14);
+    }
+    .card[data-card-status="Completed"]:hover { border-color: #86efac; }
+    .card[data-card-status="Ordered"] {
+      background: #faf5ff; border-color: #e9d5ff;
+      box-shadow: 0 8px 22px rgba(168,85,247,0.14);
+    }
+    .card[data-card-status="Ordered"]:hover { border-color: #d8b4fe; }
+    .column[data-status="New Request"] .card {
+      border-color: #fecaca;
+      box-shadow: 0 8px 24px rgba(248,113,113,0.28);
+    }
+
+    @keyframes flash-yellow {
+      0%,100% { border-color:#facc15; background:#fffbeb; }
+      50%      { border-color:#eab308; background:#fef3c7; }
+    }
+    @keyframes flash-red {
+      0%,100% { border-color:#ef4444; background:#fee2e2; }
+      50%      { border-color:#b91c1c; background:#fecaca; }
+    }
+    .column[data-status="New Request"] .card.stale-3 { animation: flash-yellow 1s infinite alternate; }
+    .column[data-status="New Request"] .card.stale-6 { animation: flash-red 0.8s infinite alternate; }
+
+    .card-header-row {
+      display: flex; flex-direction: column; gap: 6px; padding-right: 26px;
+    }
+    .card-header-top {
+      display: flex; align-items: center; justify-content: space-between; gap: 6px;
+    }
+    .card-header-badges {
+      display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+    }
+    .card-header-name { font-weight: 700; font-size: 15px; color: var(--text); flex: 1; min-width: 0; }
+
+    .card-inprocess-indicator {
+      position: absolute; top: 10px; right: 36px;
+      display: flex; align-items: center; gap: 10px;
+      flex-wrap: wrap; justify-content: flex-end;
+    }
+    .card-claim {
+      font-size: 11px; font-weight: 700; white-space: nowrap;
+      padding: 2px 8px; border-radius: 999px; border: 1px solid transparent;
+      background: #f9fafb; color: var(--text-sub);
+    }
+    .card-claim.thomas { border-color: #bfdbfe; background: #eff6ff; color: #1d4ed8; }
+    .card-claim.oscar  { border-color: #bbf7d0; background: #ecfdf5; color: #15803d; }
+
+    .age-timer {
+      display: inline-flex; align-items: center; gap: 4px;
+      font-size: 11px; font-weight: 700; padding: 3px 8px;
+      border-radius: 999px; background: #fef3c7; color: #92400e;
+      white-space: nowrap; flex-shrink: 0;
+    }
+    .age-timer.age-warn { background: #fee2e2; color: #991b1b; }
+    .age-timer-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+
+    .wo-row { display: flex; flex-direction: column; margin-bottom: 2px; }
+    .wo-value { font-size: 15px; font-weight: 600; }
+    .wo-value a { color: var(--blue); text-decoration: none; word-break: break-all; display: inline-block; max-width: 100%; }
+    .wo-value a:hover { text-decoration: underline; }
+
+    .meta-row { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 2px; }
+    .chip { font-size: 12px; padding: 3px 10px; border-radius: 999px; background: #f3f4f6; color: var(--text); font-weight: 600; white-space: nowrap; }
+    .chip-secondary { background: #dbeafe; color: #075985; }
+    .chip-action    { background: #fee2e2; color: #b91c1c; }
+    .chip-deliver   { background: #fef9c3; color: #854d0e; }
+
+    .small-row { font-size: 13px; color: #4b5563; }
+    .label-inline { font-weight: 700; color: var(--text-sub); margin-right: 4px; text-transform: uppercase; font-size: 11px; letter-spacing: 0.08em; }
+
+    .notes-area {
+      width: 100%; min-height: 60px; resize: vertical; font-size: 13px;
+      font-family: inherit; padding: 7px 9px; border-radius: 8px;
+      border: 1px solid var(--border); background: #f9fafb; color: var(--text);
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .notes-area:focus { outline: none; border-color: var(--blue); box-shadow: 0 0 0 2px rgba(37,99,235,0.15); background: #fff; }
+    .notes-area:disabled { opacity: 0.6; cursor: not-allowed; }
+
+    .card-bottom-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 4px; }
+    .status-pill {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 5px 12px; border-radius: 999px;
+      font-size: 12px; font-weight: 600; white-space: nowrap;
+      border: 1.5px solid transparent;
+    }
+    .status-pill.completed {
+      background: #dbeafe; color: #1d4ed8; border-color: #bfdbfe;
+    }
+    .status-pill.ordered {
+      background: #f3e8ff; color: #7e22ce; border-color: #e9d5ff;
+    }
+    .status-pill-icon { font-size: 13px; line-height: 1; }
+    .status-pill-by { font-weight: 700; }
+    .status-pill-sep { opacity: 0.45; margin: 0 1px; }
+    .status-pill-time { font-weight: 500; opacity: 0.85; }
+    .card-time-footer { font-size: 11px; font-weight: 600; color: var(--text-muted); white-space: nowrap; flex-shrink: 0; }
+
+    .actions { margin-top: 6px; display: flex; flex-wrap: wrap; gap: 6px; }
+    .btn { border: none; border-radius: 999px; padding: 5px 12px; font-size: 12px; cursor: pointer; font-weight: 600; transition: opacity 0.15s; }
+    .btn:disabled { opacity: 0.5; cursor: default; }
+    .btn-completed { background: var(--green); color: #fff; display: none; }
+    .btn-ordered   { background: var(--purple); color: #fff; display: none; }
+    .column[data-status="In Process"] .btn-completed,
+    .column[data-status="In Process"] .btn-ordered { display: none; }
+    body.advisor-mode .column[data-status="In Process"] .btn-completed,
+    body.advisor-mode .column[data-status="In Process"] .btn-ordered { display: inline-block; }
+
+    /* ── NEW REQUEST AGE TIMER ──────────────────────────── */
+    .nr-age-timer {
+      display: inline-flex; align-items: center; gap: 4px;
+      font-size: 11px; font-weight: 700; padding: 3px 8px;
+      border-radius: 999px; background: #f3f4f6; color: #6b7280;
+      white-space: nowrap; flex-shrink: 0;
+    }
+    .nr-age-timer.nr-age-warn  { background: #fef3c7; color: #92400e; }
+    .nr-age-timer.nr-age-alert { background: #fee2e2; color: #991b1b; }
+    .nr-age-timer-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
+
+    /* ── SUBMIT CONFIRM BANNER ──────────────────────────── */
+    #submit-confirm-banner {
+      display: none; position: fixed;
+      top: 18px; left: 50%; transform: translateX(-50%);
+      z-index: 9500;
+      background: #f0fdf4; border: 1.5px solid #86efac;
+      border-radius: 999px; padding: 8px 18px 8px 14px;
+      box-shadow: 0 6px 24px rgba(15,23,42,0.14);
+      white-space: nowrap;
+      animation: slideDown 0.22s ease;
+    }
+    #submit-confirm-banner.show { display: flex; align-items: center; gap: 10px; }
+    @keyframes slideDown {
+      from { opacity: 0; transform: translateX(-50%) translateY(-10px); }
+      to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+    }
+    .submit-confirm-icon  { font-size: 16px; flex-shrink: 0; }
+    .submit-confirm-title { font-size: 13px; font-weight: 700; color: #15803d; }
+    .submit-confirm-sub   { font-size: 12px; color: #166534; opacity: 0.8; margin-left: 2px; }
+    #submit-confirm-close {
+      font-size: 13px; color: #6b7280; background: none; border: none;
+      cursor: pointer; padding: 0 2px; flex-shrink: 0; line-height: 1;
+      margin-left: 4px;
+    }
+    #submit-confirm-close:hover { color: #374151; }
+    #my-requests-btn {
+      border: none; border-radius: 999px; padding: 6px 14px;
+      font-size: 13px; font-weight: 600; cursor: pointer;
+      background: var(--surface); color: #374151;
+      box-shadow: var(--shadow-sm); border: 1.5px solid var(--border);
+      transition: all 0.15s; white-space: nowrap; display: none;
+      align-items: center;
+    }
+    #my-requests-btn.active {
+      background: #eff6ff; color: #1d4ed8;
+      border-color: #bfdbfe; box-shadow: 0 0 0 2px rgba(37,99,235,0.12);
+    }
+    #my-requests-btn:hover:not(.active) { border-color: #93c5fd; color: #2563eb; }
+
+    /* ── INLINE DELETE CONFIRM ──────────────────────────── */
+    .card-delete {
+      position: absolute; top: 8px; right: 10px;
+      width: 22px; height: 22px; border-radius: 50%;
+      border: none; background: #fee2e2; color: #b91c1c;
+      font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center;
+      cursor: pointer; transition: background 0.12s;
+    }
+    .card-delete:hover { background: #fecaca; }
+    .card-delete:disabled { opacity: 0; pointer-events: none; }
+    .card-delete-confirm {
+      display: flex; align-items: center; gap: 6px;
+      padding: 6px 10px; margin: 2px 0 4px;
+      background: #fff5f5; border: 1px solid #fecaca;
+      border-radius: 8px; font-size: 12px; color: #b91c1c; font-weight: 600;
+    }
+    .card-delete-confirm-label { flex: 1; font-size: 12px; font-weight: 600; color: #991b1b; }
+    .card-delete-yes {
+      border: none; border-radius: 999px; padding: 3px 10px;
+      background: #ef4444; color: #fff; font-size: 11px; font-weight: 700;
+      cursor: pointer; transition: background 0.12s; white-space: nowrap;
+    }
+    .card-delete-yes:hover { background: #dc2626; }
+    .card-delete-cancel {
+      border: none; border-radius: 999px; padding: 3px 9px;
+      background: #f3f4f6; color: #6b7280; font-size: 11px; font-weight: 700;
+      cursor: pointer; transition: background 0.12s;
+    }
+    .card-delete-cancel:hover { background: #e5e7eb; }
+
+    /* ── ON LUNCH ───────────────────────────────────────── */
+    #lunch-btn {
+      display: none; padding: 5px 13px; border-radius: 999px;
+      border: 1.5px solid #fde68a; background: #fefce8; color: #92400e;
+      font-size: 12px; font-weight: 700; cursor: pointer;
+      align-items: center; gap: 5px;
+      transition: all 0.15s; white-space: nowrap;
+    }
+    #lunch-btn:hover { background: #fef3c7; border-color: #fcd34d; }
+    #lunch-btn.on-lunch {
+      background: #f97316; border-color: #ea580c; color: #fff;
+    }
+    #lunch-btn.on-lunch:hover { background: #ea580c; }
+
+    #lunch-banner {
+      display: none; align-items: center; justify-content: center; gap: 10px;
+      padding: 10px 20px; border-radius: 10px; margin-bottom: 10px;
+      background: #fef3c7; border: 1.5px solid #fcd34d;
+      animation: pulse-yellow 2s infinite;
+    }
+    #lunch-banner.show { display: flex; }
+    @keyframes pulse-yellow {
+      0%,100% { border-color: #fcd34d; background: #fef3c7; }
+      50%      { border-color: #f59e0b; background: #fde68a; }
+    }
+    .lunch-banner-icon { font-size: 18px; }
+    .lunch-banner-text { font-size: 13px; font-weight: 700; color: #92400e; }
+    .lunch-banner-time { font-size: 12px; color: #b45309; font-weight: 500; }
+    .comments-section { margin: 4px 0 2px; }
+    .comments-toggle {
+      display: flex; align-items: center; gap: 5px;
+      font-size: 11px; font-weight: 700; color: var(--text-sub);
+      cursor: pointer; user-select: none; padding: 4px 0;
+      text-transform: uppercase; letter-spacing: 0.07em;
+      background: none; border: none; width: 100%;
+    }
+    .comments-toggle:hover { color: var(--blue); }
+    .comments-toggle-arrow { transition: transform 0.18s; font-size: 9px; }
+    .comments-toggle-arrow.open { transform: rotate(90deg); }
+    .comments-count { font-size: 10px; color: var(--text-muted); font-weight: 600; }
+    .comments-body { display: none; margin-top: 6px; }
+    .comments-body.open { display: flex; flex-direction: column; gap: 5px; }
+    .comment-entry {
+      padding: 7px 10px; border-radius: 8px;
+      background: #f8fafc; border: 1px solid var(--border);
+      display: flex; flex-direction: column; gap: 2px;
+    }
+    .comment-meta {
+      display: flex; gap: 6px; align-items: center;
+      font-size: 10px; font-weight: 700; color: var(--text-muted);
+    }
+    .comment-author { color: #374151; font-weight: 700; }
+    .comment-time   { color: var(--text-muted); font-weight: 500; }
+    .comment-text   { font-size: 12px; color: var(--text); line-height: 1.45; }
+    .comment-actions { display: flex; gap: 6px; margin-top: 2px; }
+    .comment-action-btn {
+      background: none; border: none; cursor: pointer; padding: 0;
+      font-size: 11px; font-weight: 600; transition: color 0.12s;
+    }
+    .comment-action-btn.edit-btn   { color: #6b7280; }
+    .comment-action-btn.edit-btn:hover   { color: #2563eb; }
+    .comment-action-btn.delete-btn { color: #6b7280; }
+    .comment-action-btn.delete-btn:hover { color: #dc2626; }
+    .comment-edit-row { display: flex; gap: 6px; margin-top: 4px; }
+    .comment-edit-input {
+      flex: 1; padding: 5px 9px; border-radius: 7px; font-size: 12px;
+      border: 1.5px solid #93c5fd; background: #fff;
+      font-family: inherit; outline: none; color: var(--text);
+    }
+    .comment-save-btn {
+      padding: 5px 11px; border-radius: 7px; border: none;
+      font-size: 11px; font-weight: 700; background: var(--blue);
+      color: #fff; cursor: pointer; white-space: nowrap;
+    }
+    .comment-save-btn:hover { background: #1d4ed8; }
+    .comment-cancel-btn {
+      padding: 5px 9px; border-radius: 7px; border: none;
+      font-size: 11px; font-weight: 700; background: #f3f4f6;
+      color: #6b7280; cursor: pointer;
+    }
+    .comment-cancel-btn:hover { background: #e5e7eb; }
+    .comment-input-row { display: flex; gap: 6px; margin-top: 4px; }
+    .comment-input {
+      flex: 1; padding: 7px 10px; border-radius: 8px; font-size: 12px;
+      border: 1.5px solid var(--border); background: #f9fafb;
+      font-family: inherit; outline: none; color: var(--text);
+      transition: border-color 0.15s;
+    }
+    .comment-input:focus { border-color: var(--blue); background: #fff; }
+    .comment-submit-btn {
+      padding: 7px 13px; border-radius: 8px; border: none;
+      font-size: 12px; font-weight: 700; background: var(--blue);
+      color: #fff; cursor: pointer; white-space: nowrap;
+      transition: background 0.12s;
+    }
+    .comment-submit-btn:hover { background: #1d4ed8; }
+    .comment-empty { font-size: 12px; color: var(--text-muted); font-style: italic; padding: 2px 0; }
+
+    /* ── FAB ────────────────────────────────────────────── */
+    #new-request-fab {
+      display: none;
+      position: fixed; bottom: 28px; right: 28px; z-index: 900;
+    }
+    #new-request-fab button {
+      background: var(--blue); color: #fff; border: none; border-radius: 999px;
+      padding: 15px 28px; font-size: 14px; font-weight: 700; cursor: pointer;
+      box-shadow: 0 6px 24px rgba(37,99,235,0.45);
+      display: flex; align-items: center; gap: 8px;
+      transition: background 0.15s, transform 0.12s, box-shadow 0.15s;
+    }
+    #new-request-fab button:hover { background: #1d4ed8; transform: translateY(-2px); box-shadow: 0 10px 32px rgba(37,99,235,0.55); }
+
+    /* ── MODAL ──────────────────────────────────────────── */
+    #nr-backdrop {
+      display: none; position: fixed; inset: 0;
+      background: rgba(15,23,42,0.55); backdrop-filter: blur(3px);
+      z-index: 1000; align-items: center; justify-content: center; padding: 20px;
+    }
+    #nr-backdrop.open { display: flex; }
+    #nr-modal {
+      background: var(--surface); border-radius: 20px;
+      width: 100%; max-width: 520px; max-height: 92vh; overflow-y: auto;
+      box-shadow: 0 24px 64px rgba(15,23,42,0.4);
+      animation: modalIn 0.2s ease;
+    }
+    @keyframes modalIn {
+      from { opacity:0; transform: translateY(14px) scale(0.98); }
+      to   { opacity:1; transform: translateY(0) scale(1); }
+    }
+    #nr-modal-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 20px 24px 14px; border-bottom: 1px solid var(--border);
+    }
+    #nr-modal-title { font-size: 17px; font-weight: 700; display: flex; align-items: center; gap: 10px; }
+    .nr-title-badge {
+      background: #dbeafe; color: #1d4ed8; font-size: 11px; font-weight: 700;
+      letter-spacing: 0.08em; text-transform: uppercase; padding: 3px 8px; border-radius: 999px;
+    }
+    #nr-close-btn {
+      background: #f3f4f6; border: none; border-radius: 50%; width: 30px; height: 30px;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      color: var(--text-sub); font-size: 16px; transition: background 0.12s, color 0.12s;
+    }
+    #nr-close-btn:hover { background: #fee2e2; color: #dc2626; }
+    #nr-modal-body { padding: 18px 24px 20px; display: flex; flex-direction: column; gap: 14px; }
+    .nr-field { display: flex; flex-direction: column; gap: 5px; }
+    .nr-label { font-size: 11px; font-weight: 700; color: #374151; text-transform: uppercase; letter-spacing: 0.07em; display: flex; align-items: center; gap: 4px; }
+    .nr-required { color: #ef4444; font-size: 14px; }
+    .nr-input, .nr-select, .nr-textarea {
+      width: 100%; padding: 9px 12px; border-radius: 10px;
+      border: 1.5px solid var(--border); background: #f9fafb;
+      color: var(--text); font-size: 14px; font-family: inherit; outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
+    }
+    .nr-input:focus, .nr-select:focus, .nr-textarea:focus {
+      border-color: var(--blue); box-shadow: 0 0 0 3px rgba(37,99,235,0.12); background: #fff;
+    }
+    .nr-select { cursor: pointer; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236b7280' d='M6 8L1 3h10z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; background-color: #f9fafb; padding-right: 30px; }
+    .nr-textarea { min-height: 76px; resize: vertical; }
+    .nr-two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .nr-sr-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+      gap: 4px; padding: 10px 12px; border-radius: 10px;
+      border: 1.5px solid var(--border); background: #f9fafb;
+      max-height: 160px; overflow-y: auto;
+    }
+    .nr-sr-label {
+      display: flex; align-items: center; gap: 5px;
+      font-size: 13px; font-weight: 500; color: #374151;
+      cursor: pointer; padding: 4px 6px; border-radius: 6px;
+      user-select: none; transition: background 0.1s;
+    }
+    .nr-sr-label:hover { background: #eff6ff; color: #1d4ed8; }
+    .nr-sr-label input { width: 13px; height: 13px; accent-color: var(--blue); cursor: pointer; }
+    .nr-search-wrap { position: relative; }
+    .nr-search-input {
+      width: 100%; padding: 9px 12px 9px 34px; border-radius: 10px;
+      border: 1.5px solid var(--border); background: #f9fafb url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='13' height='13' viewBox='0 0 24 24' fill='none' stroke='%239ca3af' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='M21 21l-4.35-4.35'/%3E%3C/svg%3E") no-repeat 10px center;
+      color: var(--text); font-size: 14px; font-family: inherit; outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .nr-search-input:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(37,99,235,0.12); background-color: #fff; }
+    .nr-search-dropdown {
+      display: none; position: absolute; top: calc(100% + 4px); left: 0; right: 0;
+      background: var(--surface); border: 1.5px solid var(--border); border-radius: 10px;
+      box-shadow: var(--shadow-lg); z-index: 200; max-height: 180px; overflow-y: auto;
+    }
+    .nr-search-dropdown.open { display: block; }
+    .nr-search-option { padding: 8px 13px; font-size: 14px; cursor: pointer; transition: background 0.1s; }
+    .nr-search-option:hover, .nr-search-option.highlighted { background: #eff6ff; color: #1d4ed8; }
+    .nr-search-option.no-match { color: var(--text-muted); cursor: default; font-style: italic; }
+    .nr-search-selected-badge {
+      display: inline-flex; align-items: center; gap: 5px; margin-top: 5px;
+      background: #dbeafe; color: #1d4ed8; border: 1px solid #bfdbfe;
+      border-radius: 999px; padding: 3px 10px; font-size: 12px; font-weight: 600;
+    }
+    #nr-modal-footer {
+      padding: 14px 24px 20px; border-top: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    }
+    #nr-submit-btn {
+      background: var(--blue); color: #fff; border: none; border-radius: 999px;
+      padding: 10px 26px; font-size: 14px; font-weight: 700; cursor: pointer;
+      box-shadow: 0 4px 14px rgba(37,99,235,0.35); display: flex; align-items: center; gap: 7px;
+      transition: background 0.15s, transform 0.12s;
+    }
+    #nr-submit-btn:hover:not(:disabled) { background: #1d4ed8; transform: translateY(-1px); }
+    #nr-submit-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+    #nr-cancel-btn { background: none; border: none; color: var(--text-sub); font-size: 14px; cursor: pointer; font-weight: 500; }
+    #nr-cancel-btn:hover { color: var(--text); }
+    #nr-submit-status { font-size: 13px; }
+    #nr-submit-status.success { color: #16a34a; }
+    #nr-submit-status.error   { color: #dc2626; }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .nr-spinner { width: 13px; height: 13px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.4); border-top-color: #fff; animation: spin 0.7s linear infinite; }
+
+    /* ── METRICS ────────────────────────────────────────── */
+    .metrics-panel { display: none; flex-direction: column; gap: 22px; }
+    .metrics-panel.visible { display: flex; }
+    .metrics-loading { text-align: center; padding: 60px 20px; font-size: 15px; color: var(--text-sub); }
+    .metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(155px, 1fr)); gap: 12px; }
+    .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 18px; box-shadow: var(--shadow-sm); display: flex; flex-direction: column; gap: 3px; }
+    .stat-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-sub); }
+    .stat-value { font-size: 26px; font-weight: 700; color: var(--text); line-height: 1.1; }
+    .stat-sub   { font-size: 11px; color: var(--text-muted); }
+    .metrics-section { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px 22px; box-shadow: var(--shadow-sm); }
+    .metrics-section-title { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-sub); margin-bottom: 14px; }
+    .metrics-section-sub { font-size: 11px; color: var(--text-muted); text-transform: none; letter-spacing: 0; margin-left: 6px; }
+    .bar-chart { display: flex; align-items: flex-end; gap: 4px; height: 130px; padding-bottom: 30px; }
+    .bar-col { display: flex; flex-direction: column; align-items: center; flex: 1; min-width: 0; position: relative; }
+    .bar-wrap { flex: 1; width: 100%; display: flex; align-items: flex-end; }
+    .bar { width: 100%; border-radius: 4px 4px 0 0; background: var(--blue); min-height: 2px; position: relative; transition: height 0.4s; }
+    .bar:hover::after { content: attr(data-count); position: absolute; top: -22px; left: 50%; transform: translateX(-50%); background: #111827; color: #f9fafb; font-size: 11px; font-weight: 700; padding: 2px 6px; border-radius: 4px; white-space: nowrap; pointer-events: none; }
+    .bar-label { font-size: 9px; color: var(--text-muted); white-space: nowrap; transform: rotate(-45deg); transform-origin: top left; position: absolute; bottom: -26px; left: 50%; }
+    .bar-chart-hourly { display: flex; align-items: flex-end; gap: 6px; height: 150px; padding-bottom: 22px; }
+    .bar-chart-hourly .bar-col { flex: 1; min-width: 0; position: relative; }
+    .bar-chart-hourly .bar { background: var(--amber); }
+    .bar-chart-hourly .bar.bar-peak { background: var(--red); }
+    .bar-chart-hourly .bar-label { font-size: 9px; transform: none; position: absolute; bottom: -16px; left: 50%; transform: translateX(-50%); }
+    .rt-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 10px; }
+    .rt-item { display: flex; flex-direction: column; gap: 2px; padding: 11px 13px; border-radius: 10px; background: #f3f4f6; border: 1px solid var(--border); }
+    .rt-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-sub); }
+    .rt-value { font-size: 20px; font-weight: 700; color: var(--text); }
+    .rt-unit  { font-size: 10px; color: var(--text-muted); }
+    .req-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .req-table th { text-align: left; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--text-sub); padding: 0 10px 8px 0; border-bottom: 1px solid var(--border); }
+    .req-table td { padding: 8px 10px 8px 0; border-bottom: 1px solid var(--border); color: var(--text); }
+    .req-table tr:last-child td { border-bottom: none; }
+    .req-table td:not(:first-child), .req-table th:not(:first-child) { text-align: center; font-weight: 600; }
+    .req-bar-wrap { display: flex; align-items: center; gap: 8px; }
+    .req-bar-track { flex: 1; height: 5px; border-radius: 999px; background: var(--border); overflow: hidden; }
+    .req-bar-fill  { height: 100%; border-radius: 999px; background: var(--blue); }
+    .metrics-two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .peak-legend { display: flex; align-items: center; gap: 14px; margin-top: 12px; font-size: 11px; color: var(--text-sub); }
+    .peak-legend-item { display: flex; align-items: center; gap: 5px; }
+    .peak-legend-dot  { width: 9px; height: 9px; border-radius: 2px; }
+
+
+
+    /* ── TOAST ──────────────────────────────────────────── */
+    #toast-container { position: fixed; left: 16px; bottom: 16px; display: flex; flex-direction: column; gap: 6px; z-index: 9998; }
+    .toast { max-width: 240px; padding: 8px 12px; border-radius: 8px; font-size: 13px; color: #0f172a; background: #e0f2fe; border: 1px solid #bae6fd; box-shadow: var(--shadow-md); }
+    .toast.error { background: #fee2e2; border-color: #fecaca; color: #7f1d1d; }
+
+    /* ── RESPONSIVE ─────────────────────────────────────── */
+    @media (max-width: 1200px) {
+      .board { grid-template-columns: repeat(2, 1fr); }
+      .cards { max-height: none; overflow-y: visible; }
+      .metrics-two-col { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 800px) {
+      body { padding: 14px; }
+      .board { grid-template-columns: 1fr; }
+      .top-bar-row1 { flex-direction: column; align-items: flex-start; }
+      .top-bar-right { align-items: flex-start; }
+      .nr-two-col { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Config Banner (shown when SUPABASE_URL / SUPABASE_ANON_KEY are not set) -->
+<div id="config-banner">
+  <div id="config-inner">
+    <h2>⚙️ Connect Supabase</h2>
+    <p>Enter your project URL and anon key from<br><strong>Supabase → Settings → API</strong>.<br>These are saved in localStorage on this device.</p>
+    <div class="cfg-field">
+      <span class="cfg-label">Project URL</span>
+      <input id="cfg-url" class="cfg-input" type="text" placeholder="https://xxxx.supabase.co" autocomplete="off">
+    </div>
+    <div class="cfg-field">
+      <span class="cfg-label">Anon Public Key</span>
+      <input id="cfg-key" class="cfg-input" type="text" placeholder="eyJhbGci..." autocomplete="off">
+    </div>
+    <button id="cfg-save" onclick="saveConfig()">Save &amp; Connect</button>
+    <div id="cfg-err"></div>
+  </div>
+</div>
+
+<div class="board-shell" id="board-shell" style="max-width:2200px;margin:0 auto;">
+  <div class="top-bar">
+    <!-- Row 1: Tabs + Session -->
+    <div class="top-bar-row1">
+      <div class="top-bar-left">
+        <button class="tab-btn active" id="tab-board"   onclick="onBoardClick()">📋 Board</button>
+        <button class="tab-btn"        id="tab-metrics" onclick="switchTab('metrics')">📊 Metrics</button>
+        <button id="my-requests-btn"   onclick="toggleMyRequests()">👤 My Requests</button>
+      </div>
+      <div class="top-bar-right">
+        <div class="top-bar-right-row">
+          <div id="session-bar">
+            <span id="session-role-icon">🔧</span>
+            <span>Logged in as <span id="session-name"></span></span>
+            <button id="session-logout" onclick="logout()">Log out</button>
+          </div>
+          <button id="lunch-btn" onclick="toggleLunch()">On Lunch</button>
+          <button id="login-open-btn" onclick="openLoginModal()">🔐 Log In</button>
+        </div>
+        <div class="dashboard-credit">Created by Thomas Bouchard</div>
+      </div>
+    </div>
+    <!-- Row 2: Filters -->
+    <div class="top-bar-row2">
+      <span class="filter-label" id="requester-filter-label" style="display:none">Requester:</span>
+      <select id="requester-filter" class="filter-select" style="display:none"><option value="">All</option></select>
+      <span class="filter-label">Period:</span>
+      <select id="date-preset" class="date-preset-select">
+        <option value="today">Today</option>
+        <option value="yesterday">Yesterday</option>
+        <option value="week">This Week</option>
+        <option value="month">This Month</option>
+        <option value="year">This Year</option>
+        <option value="all">All Time</option>
+        <option value="custom">Custom Range…</option>
+      </select>
+      <div class="custom-date-inputs" id="custom-date-inputs">
+        <input type="date" id="date-from" class="date-input">
+        <span class="date-sep">→</span>
+        <input type="date" id="date-to" class="date-input">
+      </div>
+      <!-- Zoom controls -->
+      <div class="zoom-controls" style="margin-left:auto">
+        <button class="zoom-btn" id="zoom-out-btn" onclick="adjustZoom(-10)" title="Zoom out">−</button>
+        <span class="zoom-level" id="zoom-level">100%</span>
+        <button class="zoom-btn" id="zoom-in-btn" onclick="adjustZoom(10)" title="Zoom in">+</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Lunch Banner -->
+  <div id="lunch-banner">
+    
+    <span class="lunch-banner-text" id="lunch-banner-text">Parts Advisors are on lunch</span>
+    <span class="lunch-banner-time" id="lunch-banner-time"></span>
+  </div>
+
+  <div id="board-root"></div>
+  <div class="metrics-panel" id="metrics-panel">
+    <div class="metrics-loading">Loading metrics…</div>
+  </div>
+</div>
+
+<div id="new-request-fab">
+  <button onclick="openModal()">＋ New Request</button>
+</div>
+
+<!-- New Request Modal -->
+<div id="nr-backdrop">
+  <div id="nr-modal" role="dialog" aria-modal="true">
+    <div id="nr-modal-header">
+      <div id="nr-modal-title">New Parts Request <span class="nr-title-badge">New Request</span></div>
+      <button id="nr-close-btn" onclick="closeModal()" aria-label="Close">✕</button>
+    </div>
+    <div id="nr-modal-body">
+      <div class="nr-field">
+        <label class="nr-label" for="nr-wo-link">WO Link <span class="nr-required">*</span></label>
+        <input id="nr-wo-link" class="nr-input" type="text" placeholder="https://… or WO-000000000" autocomplete="off">
+      </div>
+      <div class="nr-field">
+        <label class="nr-label">Service Request</label>
+        <div class="nr-sr-grid" id="nr-sr-grid">
+          <label class="nr-sr-label"><input type="checkbox" name="nr-sr" value="SR-ALL"> SR-ALL</label>
+          <label class="nr-sr-label"><input type="checkbox" name="nr-sr" value="SR-1"> SR-1</label>
+          <label class="nr-sr-label"><input type="checkbox" name="nr-sr" value="SR-2"> SR-2</label>
+          <label class="nr-sr-label"><input type="checkbox" name="nr-sr" value="SR-3"> SR-3</label>
+          <label class="nr-sr-label"><input type="checkbox" name="nr-sr" value="SR-4"> SR-4</label>
+          <label class="nr-sr-label"><input type="checkbox" name="nr-sr" value="SR-5"> SR-5</label>
+          <label class="nr-sr-label"><input type="checkbox" name="nr-sr" value="SR-6"> SR-6</label>
+          <label class="nr-sr-label"><input type="checkbox" name="nr-sr" value="SR-7"> SR-7</label>
+          <label class="nr-sr-label"><input type="checkbox" name="nr-sr" value="SR-8"> SR-8</label>
+          <label class="nr-sr-label"><input type="checkbox" name="nr-sr" value="SR-9"> SR-9</label>
+          <label class="nr-sr-label"><input type="checkbox" name="nr-sr" value="SR-10"> SR-10</label>
+          <label class="nr-sr-label"><input type="checkbox" name="nr-sr" value="SR-11"> SR-11</label>
+          <label class="nr-sr-label"><input type="checkbox" name="nr-sr" value="SR-12"> SR-12</label>
+        </div>
+      </div>
+      <div class="nr-two-col">
+        <div class="nr-field">
+          <label class="nr-label" for="nr-action">Action</label>
+          <select id="nr-action" class="nr-select">
+            <option value="">— Select —</option>
+            <option>Pull Parts</option>
+            <option>Order Parts</option>
+            <option>Parts Inquiry</option>
+          </select>
+        </div>
+        <div class="nr-field">
+          <label class="nr-label" for="nr-deliver">Deliver Parts</label>
+          <select id="nr-deliver" class="nr-select">
+            <option value="">— Select —</option>
+            <option>Mobile Staging Area</option>
+            <option>Alignment Rack</option>
+            <option>Bay 1</option><option>Bay 2</option><option>Bay 3</option>
+            <option>Bay 4</option><option>Bay 5</option><option>Bay 6</option><option>Bay 7</option>
+          </select>
+        </div>
+      </div>
+      <div class="nr-field">
+        <label class="nr-label" for="nr-notes">Notes</label>
+        <textarea id="nr-notes" class="nr-textarea" placeholder="Any additional context…"></textarea>
+      </div>
+      <div class="nr-field">
+        <label class="nr-label">Submitted By</label>
+        <div id="nr-submitted-by-display" style="padding:9px 12px;border-radius:10px;border:1.5px solid var(--border);background:#f3f4f6;font-size:14px;font-weight:600;color:#374151;">—</div>
+        <input type="hidden" id="nr-submitted-by">
+      </div>
+    </div>
+    <div id="nr-modal-footer">
+      <button id="nr-cancel-btn" onclick="closeModal()">Cancel</button>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span id="nr-submit-status"></span>
+        <button id="nr-submit-btn" onclick="submitRequest()">Submit Request</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toast-container"></div>
+
+<!-- Submit Confirmation Banner (techs only, top-center) -->
+<div id="submit-confirm-banner">
+  <span class="submit-confirm-icon">✅</span>
+  <span class="submit-confirm-title">Request submitted!</span>
+  <span class="submit-confirm-sub">Watch the board for updates.</span>
+  <button id="submit-confirm-close" onclick="hideSubmitConfirm()">✕</button>
+</div>
+
+<!-- Login Modal -->
+<div id="login-backdrop">
+  <div id="login-modal" role="dialog" aria-modal="true">
+    <div id="login-modal-header">
+      <div id="login-modal-title">Sign In to Parts Dashboard</div>
+    </div>
+    <div class="login-role-tabs">
+      <button class="login-role-tab tech active" id="tab-tech" onclick="switchLoginRole('tech')">🔧 Technician</button>
+      <button class="login-role-tab advisor" id="tab-advisor" onclick="switchLoginRole('advisor')">🛠️ Parts Advisor</button>
+    </div>
+    <div id="login-modal-body">
+      <!-- Name search -->
+      <div class="login-field">
+        <label class="login-label" id="login-name-label">Your Name</label>
+        <div class="login-search-wrap">
+          <input id="login-name-search" class="login-search-input" type="text" placeholder="Search your name…" autocomplete="off" spellcheck="false">
+          <div id="login-name-dropdown" class="login-search-dropdown"></div>
+        </div>
+        <div id="login-selected-badge" class="login-selected-badge tech-badge">
+          <span id="login-selected-name"></span>
+          <span onclick="clearLoginName()" style="cursor:pointer;font-size:13px;margin-left:2px;">✕</span>
+        </div>
+        <input type="hidden" id="login-name-value">
+      </div>
+      <!-- Password (advisor only) -->
+      <div class="login-field" id="login-pw-field" style="display:none">
+        <label class="login-label">Password</label>
+        <input id="login-pw" class="login-pw-input" type="password" placeholder="Enter password…" autocomplete="current-password">
+      </div>
+      <div id="login-err"></div>
+      <button id="login-submit-btn" class="tech-btn" onclick="submitLogin()">Sign In as Technician</button>
+      <div class="login-hint" id="login-hint">Technicians can submit requests and add comments.</div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+// CONFIGURATION
+// ═══════════════════════════════════════════════════════════
+// These credentials are saved in localStorage.
+// On first load the config banner appears if they're missing.
+
+let SUPABASE_URL  = 'https://xskoksbyxfmwepwuabpp.supabase.co';
+let SUPABASE_KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhza29rc2J5eGZtd2Vwd3VhYnBwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc1ODAwMjMsImV4cCI6MjA5MzE1NjAyM30.W-AGj3WUgQ2E42EgahsOuuf2AHYJ4lvBH0E0C2CrUww';
+let sbClient      = null;
+let realtimeChan        = null;
+let realtimeCommentChan = null;
+let realtimeLunchChan   = null;
+
+function loadConfig() {
+  try {
+    const storedUrl = localStorage.getItem('sb_url');
+    const storedKey = localStorage.getItem('sb_key');
+    if (storedUrl) SUPABASE_URL = storedUrl.trim().replace(/\/+$/, '');
+    if (storedKey) SUPABASE_KEY = storedKey.trim();
+  } catch(e) {}
+  return !!(SUPABASE_URL && SUPABASE_KEY);
+}
+
+function saveConfig() {
+  const url = document.getElementById('cfg-url').value.trim();
+  const key = document.getElementById('cfg-key').value.trim();
+  const err = document.getElementById('cfg-err');
+  if (!url.startsWith('https://') || !url.includes('supabase.co')) {
+    err.textContent = 'URL must be like https://xxxx.supabase.co'; return;
+  }
+  if (key.length < 30) { err.textContent = 'Key looks too short — check again.'; return; }
+  try {
+    localStorage.setItem('sb_url', url);
+    localStorage.setItem('sb_key', key);
+  } catch(e) {}
+  SUPABASE_URL = url; SUPABASE_KEY = key;
+  document.getElementById('config-banner').classList.remove('show');
+  initSupabase();
+}
+
+// ═══════════════════════════════════════════════════════════
+// CONSTANTS & STATE
+// ═══════════════════════════════════════════════════════════
+const STATUS_ORDER= ['Done','In Process','New Request'];
+const VALID_STATUS= ['New Request','In Process','Completed','Ordered'];
+const TECH_NAMES  = [
+  'Blake Gable','Darius Miller','David Rosney','Julio Arreaga',
+  'Justin Davidson','Nolind Litchfield','Rodrigo Valderrama',
+  'Scott Hugo','Shawn Anderson','Zachary Garman','Zeke Haslet'
+];
+// Parts advisors — name → password. Keep this in sync with your team.
+const ADVISOR_PASSWORDS = {
+  'Thomas Bouchard': 'Parts8158',
+  'Oscar Emanuels':  'Parts8158'
+};
+
+let allRows              = [];
+let currentUser          = null;   // logged-in name
+let currentRole          = null;   // 'tech' | 'advisor' | null
+let canEdit              = false;  // only advisors
+let currentTab           = 'board';
+let currentFilterReq     = '';
+let datePreset           = 'today';
+let loginRole            = 'tech'; // which tab is active in the login modal
+let loginDropHiIdx       = -1;
+let myRequestsActive     = false;  // My Requests toggle
+let lunchStates          = {};     // { advisorName: { on_lunch, lunch_started_at } }
+let lunchBannerTimer     = null;
+
+// ═══════════════════════════════════════════════════════════
+// SUPABASE INIT
+// ═══════════════════════════════════════════════════════════
+function initSupabase() {
+  try {
+    sbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  } catch(e) {
+    showToast('Failed to init Supabase: ' + e.message, 'error'); return;
+  }
+  setRtStatus('connecting');
+  fetchAll().then(() => {
+    setupRealtime();
+    renderBoard();
+    buildRequesterFilter();
+    updatePageTitle();
+  });
+  fetchLunchStates();
+}
+
+// ═══════════════════════════════════════════════════════════
+// DATA LAYER
+// ═══════════════════════════════════════════════════════════
+async function fetchAll() {
+  // Try ordering by requested_at; fall back to created_at if column doesn't exist
+  let result = await sbClient
+    .from('parts_requests')
+    .select('*')
+    .order('requested_at', { ascending: false });
+
+  if (result.error && result.error.message.includes('requested_at')) {
+    result = await sbClient
+      .from('parts_requests')
+      .select('*')
+      .order('created_at', { ascending: false });
+  }
+
+  if (result.error) { showToast('Fetch error: ' + result.error.message, 'error'); return; }
+  allRows = result.data || [];
+}
+
+async function insertRequest(payload) {
+  const { data, error } = await sbClient.from('parts_requests').insert([payload]).select().single();
+  if (error) throw new Error(error.message);
+  return data;
+}
+
+async function updateStatus(id, newStatus, user) {
+  const patch = { status: newStatus, status_changed_at: new Date().toISOString() };
+  if (newStatus === 'Completed' || newStatus === 'Ordered' || newStatus === 'In Process') {
+    patch.completed_by = user;
+  }
+  if (newStatus === 'New Request') { patch.completed_by = null; patch.status_changed_at = null; }
+  const { error } = await sbClient.from('parts_requests').update(patch).eq('id', id);
+  if (error) throw new Error(error.message);
+}
+
+async function updateNotes(id, notes) {
+  const { error } = await sbClient.from('parts_requests').update({ notes }).eq('id', id);
+  if (error) showToast('Notes save failed: ' + error.message, 'error');
+}
+
+async function deleteRow(id) {
+  const { error } = await sbClient.from('parts_requests').delete().eq('id', id);
+  if (error) throw new Error(error.message);
+}
+
+async function fetchComments(requestId) {
+  const { data, error } = await sbClient
+    .from('parts_request_comments')
+    .select('*')
+    .eq('request_id', requestId)
+    .order('created_at', { ascending: true });
+  if (error) { console.error('fetchComments error:', error); return []; }
+  return data || [];
+}
+
+async function insertComment(requestId, author, body) {
+  const { data, error } = await sbClient
+    .from('parts_request_comments')
+    .insert([{ request_id: requestId, author, body }])
+    .select().single();
+  if (error) throw new Error(error.message);
+  return data;
+}
+
+async function updateComment(id, body) {
+  const { error } = await sbClient
+    .from('parts_request_comments')
+    .update({ body })
+    .eq('id', id);
+  if (error) throw new Error(error.message);
+}
+
+async function deleteComment(id) {
+  const { error } = await sbClient
+    .from('parts_request_comments')
+    .delete()
+    .eq('id', id);
+  if (error) throw new Error(error.message);
+}
+
+// ═══════════════════════════════════════════════════════════
+// REALTIME
+// ═══════════════════════════════════════════════════════════
+function setupRealtime() {
+  if (realtimeChan) sbClient.removeChannel(realtimeChan);
+  realtimeChan = sbClient
+    .channel('parts_requests_rt')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'parts_requests' },
+      payload => handleRealtimeEvent(payload))
+    .subscribe(status => {
+      if (status === 'SUBSCRIBED') setRtStatus('connected');
+      else if (status === 'CHANNEL_ERROR') setRtStatus('error');
+      else setRtStatus('connecting');
+    });
+
+  // Listen for new comments — notify tech if it's on their request
+  if (realtimeCommentChan) sbClient.removeChannel(realtimeCommentChan);
+  realtimeCommentChan = sbClient
+    .channel('parts_comments_rt')
+    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'parts_request_comments' },
+      payload => handleNewComment(payload.new))
+    .subscribe();
+  // Listen for lunch state changes — updates banner on all devices instantly
+  if (realtimeLunchChan) sbClient.removeChannel(realtimeLunchChan);
+  realtimeLunchChan = sbClient
+    .channel('dashboard_settings_rt')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'dashboard_settings' },
+      payload => {
+        if (payload.new) lunchStates[payload.new.id] = payload.new;
+        updateLunchUI();
+      })
+    .subscribe();
+}
+
+function handleRealtimeEvent(payload) {
+  const { eventType, new: newRec, old } = payload;
+  if (eventType === 'INSERT') {
+    if (!allRows.find(r => r.id === newRec.id)) {
+      allRows = [newRec, ...allRows];
+    }
+    fireNewRequestAlert(newRec);
+  } else if (eventType === 'UPDATE') {
+    allRows = allRows.map(r => r.id === newRec.id ? newRec : r);
+  } else if (eventType === 'DELETE') {
+    allRows = allRows.filter(r => r.id !== old.id);
+  }
+  if (currentTab === 'board') { renderBoard(); buildRequesterFilter(); }
+  updatePageTitle();
+}
+
+function handleNewComment(comment) {
+  // Only notify if a tech is logged in and the comment was posted by someone else
+  if (!currentUser || !currentRole) return;
+  if ((comment.author || '').trim() === currentUser.trim()) return; // own comment, skip
+
+  // Find the request this comment belongs to
+  const req = allRows.find(r => r.id === comment.request_id);
+  if (!req) return;
+
+  // Only notify the tech who submitted that request
+  if (currentRole === 'tech' && (req.submitted_by || '').trim() !== currentUser.trim()) return;
+
+  // Update comment count badge on the open card if visible
+  refreshCommentCount(comment.request_id);
+
+  const advisor = comment.author || 'Parts Advisor';
+  const woText  = req.wo_link ? ' on ' + String(req.wo_link).split(/[\n,]+/)[0].trim() : '';
+
+  // In-app toast
+  showToast('💬 ' + advisor + ' commented' + woText);
+
+  // Sound
+  playChime();
+
+  // Browser notification
+  if ('Notification' in window && Notification.permission === 'granted' && notificationsEnabled) {
+    const title = '💬 New comment from ' + advisor;
+    const body  = comment.body || '';
+    try {
+      const n = new Notification(title, { body, tag: 'comment-' + comment.id });
+      setTimeout(() => n.close(), 8000);
+    } catch(e) {}
+  }
+}
+
+function refreshCommentCount(requestId) {
+  // If the comments section for this card is already open, reload it
+  document.querySelectorAll('.card').forEach(card => {
+    if (String(card.dataset.id) !== String(requestId)) return;
+    const body = card.querySelector('.comments-body.open');
+    if (!body) {
+      // Just update the count badge without reloading
+      fetchComments(requestId).then(comments => {
+        const toggle = card.querySelector('.comments-toggle');
+        if (toggle) {
+          const countEl = toggle.querySelector('.comments-count');
+          if (countEl) countEl.textContent = comments.length ? ' (' + comments.length + ')' : '';
+        }
+      });
+      return;
+    }
+    // Section is open — reload comments
+    fetchComments(requestId).then(comments => {
+      const toggle  = card.querySelector('.comments-toggle');
+      const countEl = toggle ? toggle.querySelector('.comments-count') : null;
+      renderComments(body, requestId, comments, countEl);
+      body.classList.add('open');
+    });
+  });
+}
+
+function setRtStatus(s) {
+  // RT indicator removed
+}
+
+// ═══════════════════════════════════════════════════════════
+// DATE HELPERS (EST)
+// ═══════════════════════════════════════════════════════════
+function todayEst() { return new Date().toLocaleDateString('en-CA',{timeZone:'America/New_York'}); }
+function estOff()   { return new Date().toLocaleString('en-US',{timeZone:'America/New_York',timeZoneName:'short'}).includes('EDT')?'-04:00':'-05:00'; }
+function estStart(d){ return new Date(d+'T00:00:00'+estOff()).getTime(); }
+function estEnd(d)  { return new Date(d+'T23:59:59.999'+estOff()).getTime(); }
+function subDays(d,n){ const x=new Date(d+'T12:00:00Z'); x.setUTCDate(x.getUTCDate()-n); return x.toISOString().slice(0,10); }
+function wkStart(d) { const x=new Date(d+'T12:00:00Z'); x.setUTCDate(x.getUTCDate()-x.getUTCDay()); return x.toISOString().slice(0,10); }
+function moStart(d) { return d.slice(0,7)+'-01'; }
+function yrStart(d) { return d.slice(0,4)+'-01-01'; }
+
+function getDateRange() {
+  const t = todayEst();
+  switch(datePreset) {
+    case 'today':     return [estStart(t), estEnd(t)];
+    case 'yesterday': { const y=subDays(t,1); return [estStart(y), estEnd(y)]; }
+    case 'week':      return [estStart(wkStart(t)), estEnd(t)];
+    case 'month':     return [estStart(moStart(t)), estEnd(t)];
+    case 'year':      return [estStart(yrStart(t)), estEnd(t)];
+    case 'all':       return [null, null];
+    case 'custom': {
+      const f=document.getElementById('date-from').value, tt=document.getElementById('date-to').value;
+      return [f?estStart(f):null, tt?estEnd(tt):null];
+    }
+    default: return [null,null];
+  }
+}
+
+function rowMs(r) {
+  if (!r.requested_at && !r.created_at) return null;
+  return new Date(r.requested_at || r.created_at).getTime();
+}
+
+// ═══════════════════════════════════════════════════════════
+// FILTERED VIEW
+// ═══════════════════════════════════════════════════════════
+function getFilteredRows() {
+  const [s, e] = getDateRange();
+  return allRows.filter(r => {
+    const ms = rowMs(r);
+    if (s !== null && (ms === null || ms < s)) return false;
+    if (e !== null && (ms === null || ms > e)) return false;
+    if (currentFilterReq && (r.submitted_by || '').trim().toLowerCase() !== currentFilterReq.toLowerCase()) return false;
+    if (myRequestsActive && currentUser && (r.submitted_by || '').trim().toLowerCase() !== currentUser.toLowerCase()) return false;
+    return true;
+  });
+}
+
+function groupRows(rows) {
+  const g = { 'New Request':[], 'In Process':[], 'Completed':[], 'Ordered':[] };
+  rows.forEach(r => { if (g[r.status]) g[r.status].push(r); });
+  ['Completed','Ordered'].forEach(s => g[s].sort((a,b) => rowMs(b)-rowMs(a)));
+  return g;
+}
+
+// ═══════════════════════════════════════════════════════════
+// FORMATTING
+// ═══════════════════════════════════════════════════════════
+function fmtRelative(ms) {
+  if (!ms) return '—';
+  const dm=Math.floor((Date.now()-ms)/60000), dh=Math.floor(dm/60), dd=Math.floor(dh/24);
+  if (dm<1) return 'Just now';
+  if (dh<1) return dm===1?'1 min ago':dm+' mins ago';
+  if (dd<1) return dh===1?'1 hr ago':dh+' hrs ago';
+  if (dd===1) return '1 day ago';
+  if (dd<7) return dd+' days ago';
+  return new Date(ms).toLocaleDateString('en-US',{month:'short',day:'numeric'});
+}
+
+function fmtAge(ms) {
+  if (!ms) return null;
+  const dm=Math.floor((Date.now()-ms)/60000), dh=Math.floor(dm/60), dd=Math.floor(dh/24);
+  if (dm<1) return 'Just now';
+  if (dh<1) return dm===1?'1 min':dm+' mins';
+  if (dd<1) return dh===1?'1 hr':dh+' hrs';
+  return dd===1?'1 day':dd+' days';
+}
+
+function fmtEst(isoStr) {
+  if (!isoStr) return '';
+  return new Date(isoStr).toLocaleString('en-US',{timeZone:'America/New_York',month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit',hour12:true})+' EST';
+}
+
+function fmtDur(mins) {
+  if (mins==null) return '—';
+  if (mins<60) return mins+'m';
+  if (mins<1440) return Math.round(mins/60)+'h '+(mins%60)+'m';
+  return Math.floor(mins/1440)+'d '+Math.round((mins%1440)/60)+'h';
+}
+
+function isAgeWarn(ms) { return ms ? (Date.now()-ms) > 15*60*1000 : false; }
+
+// ═══════════════════════════════════════════════════════════
+// CARD BUILDING
+// ═══════════════════════════════════════════════════════════
+function buildCard(r) {
+  const card = document.createElement('div');
+  card.className = 'card';
+  card.dataset.id = r.id;
+  card.dataset.cardStatus = r.status;
+  const reqMs = rowMs(r);
+  if (reqMs) card.dataset.requestedMs = reqMs;
+  const scMs = r.status_changed_at ? new Date(r.status_changed_at).getTime() : null;
+
+  // Header row — name on top, badges below
+  const hrow = document.createElement('div'); hrow.className = 'card-header-row';
+
+  const htop = document.createElement('div'); htop.className = 'card-header-top';
+  const hname = document.createElement('div'); hname.className = 'card-header-name';
+  hname.textContent = r.submitted_by || '—';
+  htop.appendChild(hname);
+  hrow.appendChild(htop);
+
+  const hbadges = document.createElement('div'); hbadges.className = 'card-header-badges';
+  if (hbadges.children.length) hrow.appendChild(hbadges);
+  card.appendChild(hrow);
+
+  // New Request: age timer pinned to top-right (same pattern as In Process)
+  if (r.status === 'New Request' && reqMs) {
+    const ageMs = Date.now() - reqMs;
+    const ageMins = Math.floor(ageMs / 60000);
+    const ageClass = ageMins >= 6 ? 'nr-age-alert' : ageMins >= 3 ? 'nr-age-warn' : '';
+    const indicator = document.createElement('div'); indicator.className = 'card-inprocess-indicator';
+    const at = document.createElement('div');
+    at.className = 'nr-age-timer' + (ageClass ? ' ' + ageClass : '');
+    at.dataset.requestedMs = reqMs;
+    at.innerHTML = '<div class="nr-age-timer-dot"></div><span class="nr-age-timer-text">Waiting ' + (fmtAge(reqMs) || 'Just now') + '</span>';
+    indicator.appendChild(at);
+    card.appendChild(indicator);
+  }
+
+  // In Process: advisor name + age timer pinned to top-right of card
+  if (r.status === 'In Process') {
+    const indicator = document.createElement('div'); indicator.className = 'card-inprocess-indicator';
+    if (r.completed_by) {
+      const claim = document.createElement('div'); claim.className = 'card-claim';
+      const lo = String(r.completed_by).toLowerCase();
+      if (lo.startsWith('thomas bouchard')) claim.classList.add('thomas');
+      if (lo.startsWith('oscar emanuels'))  claim.classList.add('oscar');
+      claim.textContent = r.completed_by;
+      indicator.appendChild(claim);
+    }
+    if (scMs) {
+      const at = document.createElement('div'); at.className = 'age-timer' + (isAgeWarn(scMs) ? ' age-warn' : '');
+      at.dataset.changedMs = scMs;
+      at.innerHTML = '<div class="age-timer-dot"></div><span class="age-timer-text">' + (fmtAge(scMs) || 'Just now') + '</span>';
+      indicator.appendChild(at);
+    }
+    card.appendChild(indicator);
+  }
+
+  // WO link
+  const wrow = document.createElement('div'); wrow.className = 'wo-row';
+  const wval = document.createElement('div'); wval.className = 'wo-value';
+  if (r.wo_link) {
+    const parts = String(r.wo_link).split(/[\n,]+/).map(s=>s.trim()).filter(Boolean);
+    parts.forEach((p, i) => {
+      let label = p;
+      const m = p.match(/(WO-\d{9,})/);
+      if (m) label = m[1];
+      const a = document.createElement('a'); a.href = p; a.className = 'wo-link';
+      a.textContent = label; a.title = p;
+      if (i > 0) wval.appendChild(document.createTextNode('  '));
+      wval.appendChild(a);
+    });
+  } else { wval.textContent = '—'; }
+  wrow.appendChild(wval); card.appendChild(wrow);
+
+  // Chips
+  const meta = document.createElement('div'); meta.className = 'meta-row';
+  if (r.service_request) { const c=document.createElement('span'); c.className='chip chip-secondary'; c.textContent=r.service_request; meta.appendChild(c); }
+  if (r.action)           { const c=document.createElement('span'); c.className='chip chip-action';    c.textContent=r.action;          meta.appendChild(c); }
+  if (r.deliver_parts)    { const c=document.createElement('span'); c.className='chip chip-deliver';   c.textContent='Deliver: '+r.deliver_parts; meta.appendChild(c); }
+  if (meta.children.length) card.appendChild(meta);
+
+  // Notes
+  const nr = document.createElement('div'); nr.className = 'small-row';
+  const nl = document.createElement('span'); nl.className = 'label-inline'; nl.textContent = 'Notes';
+  const ta = document.createElement('textarea'); ta.className = 'notes-area'; ta.rows = 2;
+  ta.placeholder = 'Edit notes (synced to sheet)…'; ta.value = r.notes && r.notes !== 'null' ? r.notes : ''; ta.disabled = !canEdit;
+  let notesTimer = null;
+  ta.oninput = () => {
+    if (!canEdit) return;
+    clearTimeout(notesTimer);
+    notesTimer = setTimeout(() => updateNotes(r.id, ta.value), 800);
+  };
+  nr.appendChild(nl); nr.appendChild(ta); card.appendChild(nr);
+
+  // Comments
+  card.appendChild(buildCommentsSection(r.id));
+
+  // Action buttons
+  const acts = document.createElement('div'); acts.className = 'actions';
+  const bc = document.createElement('button'); bc.className='btn btn-completed'; bc.textContent='Completed'; bc.disabled=!canEdit;
+  bc.onclick = () => applyStatus(card, r.id, 'Completed');
+  const bo = document.createElement('button'); bo.className='btn btn-ordered';   bo.textContent='Ordered';   bo.disabled=!canEdit;
+  bo.onclick = () => applyStatus(card, r.id, 'Ordered');
+  acts.appendChild(bc); acts.appendChild(bo); card.appendChild(acts);
+
+  // Delete btn
+  const db = document.createElement('button'); db.className = 'card-delete'; db.textContent = '✕';
+  db.disabled = !canEdit;
+  db.onclick = () => confirmDelete(card, r.id);
+  card.appendChild(db);
+
+  // Bottom row
+  card.appendChild(buildBottomRow(r));
+
+  return card;
+}
+
+function buildCommentsSection(requestId) {
+  const section = document.createElement('div');
+  section.className = 'comments-section';
+
+  const toggle = document.createElement('button');
+  toggle.className = 'comments-toggle';
+  toggle.innerHTML = '<span class="comments-toggle-arrow">▶</span><span>Comments</span><span class="comments-count"></span>';
+  section.appendChild(toggle);
+
+  const body = document.createElement('div');
+  body.className = 'comments-body';
+  section.appendChild(body);
+
+  let loaded = false;
+
+  toggle.onclick = async (e) => {
+    e.stopPropagation();
+    const isOpen = body.classList.toggle('open');
+    toggle.querySelector('.comments-toggle-arrow').classList.toggle('open', isOpen);
+    if (isOpen && !loaded) {
+      loaded = true;
+      body.innerHTML = '<div class="comment-empty">Loading…</div>';
+      const comments = await fetchComments(requestId);
+      renderComments(body, requestId, comments, toggle.querySelector('.comments-count'));
+    }
+  };
+
+  return section;
+}
+
+function renderComments(body, requestId, comments, countEl) {
+  body.innerHTML = '';
+  if (countEl) countEl.textContent = comments.length ? ' (' + comments.length + ')' : '';
+
+  if (!comments.length) {
+    const e = document.createElement('div'); e.className = 'comment-empty';
+    e.textContent = 'No comments yet.'; body.appendChild(e);
+  } else {
+    comments.forEach((c, idx) => {
+      const entry = document.createElement('div'); entry.className = 'comment-entry';
+
+      // Meta row: author + time
+      const meta = document.createElement('div'); meta.className = 'comment-meta';
+      const auth = document.createElement('span'); auth.className = 'comment-author'; auth.textContent = c.author || 'Unknown';
+      const time = document.createElement('span'); time.className = 'comment-time';
+      time.textContent = new Date(c.created_at).toLocaleString('en-US', {
+        timeZone: 'America/New_York', month: 'short', day: 'numeric',
+        hour: 'numeric', minute: '2-digit', hour12: true
+      });
+      meta.appendChild(auth); meta.appendChild(time);
+      entry.appendChild(meta);
+
+      // Comment text
+      const text = document.createElement('div'); text.className = 'comment-text'; text.textContent = c.body;
+      entry.appendChild(text);
+
+      // Action buttons — edit (own comments only) + delete (own or advisor)
+      const isOwn    = currentUser && (c.author || '').trim() === currentUser.trim();
+      const canDelete = isOwn || currentRole === 'advisor';
+
+      if (currentUser && (isOwn || canDelete)) {
+        const actions = document.createElement('div'); actions.className = 'comment-actions';
+
+        if (isOwn) {
+          const editBtn = document.createElement('button'); editBtn.className = 'comment-action-btn edit-btn'; editBtn.textContent = 'Edit';
+          editBtn.onclick = () => showEditInput(entry, text, actions, c, comments, idx, body, requestId, countEl);
+          actions.appendChild(editBtn);
+        }
+
+        if (canDelete) {
+          const delBtn = document.createElement('button'); delBtn.className = 'comment-action-btn delete-btn'; delBtn.textContent = 'Delete';
+          delBtn.onclick = async () => {
+            if (delBtn.textContent === 'Delete') {
+              delBtn.textContent = 'Sure?';
+            } else {
+              delBtn.disabled = true; delBtn.textContent = '…';
+              try {
+                await deleteComment(c.id);
+                comments.splice(idx, 1);
+                renderComments(body, requestId, comments, countEl);
+                body.classList.add('open');
+              } catch(err) { showToast('Delete failed: ' + err.message, 'error'); delBtn.disabled = false; delBtn.textContent = 'Delete'; }
+            }
+          };
+          actions.appendChild(delBtn);
+        }
+
+        entry.appendChild(actions);
+      }
+
+      body.appendChild(entry);
+    });
+  }
+
+  // Only show input if logged in
+  if (!currentUser) return;
+
+  const inputRow = document.createElement('div'); inputRow.className = 'comment-input-row';
+  const input    = document.createElement('input'); input.type = 'text';
+  input.className = 'comment-input'; input.placeholder = 'Add a comment…';
+  input.addEventListener('keydown', e => { if (e.key === 'Enter') post(); });
+  const btn = document.createElement('button'); btn.className = 'comment-submit-btn'; btn.textContent = 'Post';
+  btn.onclick = post;
+  inputRow.appendChild(input); inputRow.appendChild(btn);
+  body.appendChild(inputRow);
+
+  async function post() {
+    const text = input.value.trim(); if (!text) return;
+    btn.disabled = true; btn.textContent = '…';
+    try {
+      const newComment = await insertComment(requestId, currentUser, text);
+      comments.push(newComment);
+      renderComments(body, requestId, comments, countEl);
+      body.classList.add('open');
+      if (currentRole === 'advisor') {
+        const req = allRows.find(r => r.id === requestId);
+        if (req && req.submitted_by) showToast('💬 ' + req.submitted_by + ' will be notified');
+      }
+    } catch(err) {
+      showToast('Comment failed: ' + err.message, 'error');
+      btn.disabled = false; btn.textContent = 'Post';
+    }
+  }
+}
+
+function showEditInput(entry, textEl, actionsEl, c, comments, idx, body, requestId, countEl) {
+  textEl.style.display = 'none';
+  actionsEl.style.display = 'none';
+
+  const editRow = document.createElement('div'); editRow.className = 'comment-edit-row';
+  const input   = document.createElement('input'); input.type = 'text';
+  input.className = 'comment-edit-input'; input.value = c.body;
+  const saveBtn   = document.createElement('button'); saveBtn.className = 'comment-save-btn';   saveBtn.textContent = 'Save';
+  const cancelBtn = document.createElement('button'); cancelBtn.className = 'comment-cancel-btn'; cancelBtn.textContent = 'Cancel';
+
+  cancelBtn.onclick = () => {
+    editRow.remove(); textEl.style.display = ''; actionsEl.style.display = '';
+  };
+  saveBtn.onclick = async () => {
+    const newBody = input.value.trim(); if (!newBody) return;
+    saveBtn.disabled = true; saveBtn.textContent = '…';
+    try {
+      await updateComment(c.id, newBody);
+      comments[idx] = { ...c, body: newBody };
+      renderComments(body, requestId, comments, countEl);
+      body.classList.add('open');
+    } catch(err) {
+      showToast('Edit failed: ' + err.message, 'error');
+      saveBtn.disabled = false; saveBtn.textContent = 'Save';
+    }
+  };
+  input.addEventListener('keydown', e => { if (e.key === 'Enter') saveBtn.click(); if (e.key === 'Escape') cancelBtn.click(); });
+
+  editRow.appendChild(input); editRow.appendChild(saveBtn); editRow.appendChild(cancelBtn);
+  entry.appendChild(editRow);
+  setTimeout(() => { input.focus(); input.select(); }, 50);
+}
+
+function buildBottomRow(r) {
+  const row = document.createElement('div'); row.className = 'card-bottom-row';
+  const left = document.createElement('div');
+
+  if ((r.status === 'Completed' || r.status === 'Ordered') && r.status_changed_at) {
+    const pill = document.createElement('div');
+    pill.className = 'status-pill ' + (r.status === 'Completed' ? 'completed' : 'ordered');
+
+    const icon = document.createElement('span'); icon.className = 'status-pill-icon';
+    icon.textContent = r.status === 'Completed' ? '✓' : '📦';
+
+    const by = document.createElement('span'); by.className = 'status-pill-by';
+    by.textContent = (r.completed_by ? r.completed_by : r.status);
+
+    const sep = document.createElement('span'); sep.className = 'status-pill-sep';
+    sep.textContent = '—';
+
+    const time = document.createElement('span'); time.className = 'status-pill-time';
+    const d = new Date(r.status_changed_at);
+    time.textContent = d.toLocaleTimeString('en-US', { timeZone: 'America/New_York', hour: 'numeric', minute: '2-digit', hour12: true });
+
+    pill.appendChild(icon);
+    pill.appendChild(by);
+    pill.appendChild(sep);
+    pill.appendChild(time);
+    left.appendChild(pill);
+  }
+
+  row.appendChild(left);
+  const right = document.createElement('div'); right.className = 'card-time-footer';
+  right.textContent = fmtRelative(rowMs(r));
+  row.appendChild(right);
+  return row;
+}
+
+// ═══════════════════════════════════════════════════════════
+// BOARD RENDER
+// ═══════════════════════════════════════════════════════════
+function renderBoard() {
+  const root = document.getElementById('board-root'); root.innerHTML = '';
+  const filtered = getFilteredRows();
+  const groups   = groupRows(filtered);
+  const board    = document.createElement('div'); board.className = 'board';
+
+  STATUS_ORDER.forEach(status => {
+    const col = document.createElement('div'); col.className = 'column'; col.dataset.status = status;
+    const inner = document.createElement('div'); inner.className = 'column-inner';
+    const hdr = document.createElement('div'); hdr.className = 'column-header';
+    const ttl = document.createElement('div'); ttl.className = 'column-title'; ttl.textContent = status;
+
+    const cd = document.createElement('div'); cd.className = 'cards';
+
+    let items;
+    if (status === 'Done') {
+      items = [...(groups['Completed'] || []), ...(groups['Ordered'] || [])];
+      items.sort((a,b) => rowMs(b)-rowMs(a));
+    } else {
+      items = groups[status] || [];
+    }
+
+    const bdg = document.createElement('div'); bdg.className = 'badge'; bdg.textContent = items.length;
+    hdr.appendChild(ttl); hdr.appendChild(bdg);
+
+    if (!items.length) {
+      const e = document.createElement('div'); e.className = 'empty'; e.textContent = 'No requests'; cd.appendChild(e);
+    } else {
+      items.forEach(r => cd.appendChild(buildCard(r)));
+    }
+
+    inner.appendChild(hdr); inner.appendChild(cd); col.appendChild(inner); board.appendChild(col);
+  });
+
+  root.appendChild(board);
+  updateStaleness();
+  attachDnd();
+  updatePageTitle();
+}
+
+// ═══════════════════════════════════════════════════════════
+// STATUS CHANGES (optimistic)
+// ═══════════════════════════════════════════════════════════
+function applyStatus(card, id, newStatus) {
+  if (!canEdit || !currentUser) return;
+  const oldStatus = card.dataset.cardStatus;
+  if (oldStatus === newStatus) return;
+
+  // Optimistic update in allRows
+  const idx = allRows.findIndex(r => r.id === id);
+  if (idx !== -1) {
+    allRows[idx] = {
+      ...allRows[idx],
+      status: newStatus,
+      status_changed_at: new Date().toISOString(),
+      completed_by: (newStatus !== 'New Request') ? currentUser : null
+    };
+  }
+  renderBoard();
+
+  updateStatus(id, newStatus, currentUser).catch(err => {
+    showToast('Update failed: ' + err.message, 'error');
+    // Revert
+    if (idx !== -1) allRows[idx].status = oldStatus;
+    renderBoard();
+  });
+}
+
+function confirmDelete(card, id) {
+  if (!canEdit || !currentUser) return;
+  const existing = card.querySelector('.card-delete');
+  if (!existing) return;
+  existing.style.display = 'none';
+
+  const wrap = document.createElement('div'); wrap.className = 'card-delete-confirm';
+  const label = document.createElement('span'); label.className = 'card-delete-confirm-label'; label.textContent = 'Delete this request?';
+
+  const yesBtn = document.createElement('button'); yesBtn.className = 'card-delete-yes'; yesBtn.textContent = 'Delete';
+  yesBtn.onclick = () => {
+    allRows = allRows.filter(r => r.id !== id);
+    renderBoard();
+    deleteRow(id).catch(err => {
+      showToast('Delete failed: ' + err.message, 'error');
+      fetchAll().then(() => renderBoard());
+    });
+  };
+
+  const cancelBtn = document.createElement('button'); cancelBtn.className = 'card-delete-cancel'; cancelBtn.textContent = 'Cancel';
+  cancelBtn.onclick = () => { wrap.remove(); existing.style.display = ''; };
+
+  wrap.appendChild(label); wrap.appendChild(yesBtn); wrap.appendChild(cancelBtn);
+
+  // Insert after the header row
+  const hrow = card.querySelector('.card-header-row');
+  if (hrow && hrow.nextSibling) {
+    card.insertBefore(wrap, hrow.nextSibling);
+  } else {
+    card.appendChild(wrap);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+// DRAG AND DROP
+// ═══════════════════════════════════════════════════════════
+function attachDnd() {
+  document.querySelectorAll('.card').forEach(card => {
+    card.draggable = !!canEdit;
+    card.addEventListener('dragstart', function() { this.classList.add('dragging'); window._drag = this; });
+    card.addEventListener('dragend',   function() { this.classList.remove('dragging'); window._drag = null; });
+  });
+  document.querySelectorAll('.cards').forEach(cont => {
+    cont.addEventListener('dragover', e => e.preventDefault());
+    cont.addEventListener('drop', e => {
+      e.preventDefault();
+      if (!window._drag || !canEdit) return;
+      const col = cont.closest('.column');
+      const targetStatus = col.dataset.status;
+      const id = parseInt(window._drag.dataset.id, 10);
+      const curStatus = window._drag.dataset.cardStatus;
+      let newStatus;
+      if (targetStatus === 'Done') newStatus = 'Completed';
+      else if (targetStatus === 'New Request' || targetStatus === 'In Process') newStatus = targetStatus;
+      else return;
+      if (newStatus !== curStatus) applyStatus(window._drag, id, newStatus);
+    });
+  });
+}
+
+// WO link click → move to In Process
+document.addEventListener('click', function(e) {
+  const link = e.target.closest('.wo-link');
+  if (!link) return;
+  e.preventDefault();
+  try { window.open(link.href, '_blank', 'noopener,noreferrer,width=1200,height=800'); } catch(err) {}
+  const card = link.closest('.card');
+  const col  = link.closest('.column');
+  if (!card || !col || !canEdit) return;
+  if (col.dataset.status === 'New Request') {
+    applyStatus(card, parseInt(card.dataset.id,10), 'In Process');
+  }
+});
+
+// ═══════════════════════════════════════════════════════════
+// STALENESS & AGE TIMERS
+// ═══════════════════════════════════════════════════════════
+function updateStaleness() {
+  document.querySelectorAll('.column[data-status="New Request"] .card').forEach(card => {
+    card.classList.remove('stale-3','stale-6');
+    const ms = parseInt(card.dataset.requestedMs,10);
+    if (!ms) return;
+    const age = Date.now() - ms;
+    if (age >= 6*60000) card.classList.add('stale-6');
+    else if (age >= 3*60000) card.classList.add('stale-3');
+  });
+}
+
+function updateAgeTimers() {
+  // In Process timers
+  document.querySelectorAll('.age-timer').forEach(el => {
+    const ms = parseInt(el.dataset.changedMs,10);
+    if (!ms) return;
+    const txt = el.querySelector('.age-timer-text');
+    if (txt) txt.textContent = 'In process '+(fmtAge(ms)||'Just now');
+    el.classList.toggle('age-warn', isAgeWarn(ms));
+  });
+  // New Request waiting timers
+  document.querySelectorAll('.nr-age-timer').forEach(el => {
+    const ms = parseInt(el.dataset.requestedMs,10);
+    if (!ms) return;
+    const txt = el.querySelector('.nr-age-timer-text');
+    if (txt) txt.textContent = 'Waiting '+(fmtAge(ms)||'Just now');
+    const ageMins = Math.floor((Date.now()-ms)/60000);
+    el.classList.remove('nr-age-warn','nr-age-alert');
+    if (ageMins >= 6) el.classList.add('nr-age-alert');
+    else if (ageMins >= 3) el.classList.add('nr-age-warn');
+  });
+  updateStaleness();
+}
+
+// ═══════════════════════════════════════════════════════════
+// NEW REQUEST MODAL
+// ═══════════════════════════════════════════════════════════
+function openModal() {
+  if (!currentUser) { showToast('Please log in to submit a request', 'error'); openLoginModal(); return; }
+  ['nr-wo-link','nr-notes'].forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
+  ['nr-action','nr-deliver'].forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
+  document.querySelectorAll('input[name="nr-sr"]').forEach(cb => cb.checked = false);
+  // Autofill submitted-by from session
+  document.getElementById('nr-submitted-by').value = currentUser;
+  const disp = document.getElementById('nr-submitted-by-display');
+  if (disp) { disp.textContent = currentUser; disp.style.color = '#111827'; }
+  const s = document.getElementById('nr-submit-status'); s.textContent=''; s.className='';
+  const b = document.getElementById('nr-submit-btn'); b.disabled=false; b.textContent='Submit Request';
+  document.getElementById('nr-backdrop').classList.add('open');
+  setTimeout(() => document.getElementById('nr-wo-link').focus(), 120);
+}
+function closeModal() { document.getElementById('nr-backdrop').classList.remove('open'); }
+document.getElementById('nr-backdrop').addEventListener('click', e => { if (e.target === document.getElementById('nr-backdrop')) closeModal(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+async function submitRequest() {
+  const woLink      = document.getElementById('nr-wo-link').value.trim();
+  const submittedBy = document.getElementById('nr-submitted-by').value.trim();
+  const statusEl  = document.getElementById('nr-submit-status');
+  const submitBtn = document.getElementById('nr-submit-btn');
+
+  if (!woLink)       { statusEl.textContent='WO Link is required.'; statusEl.className='error'; return; }
+  if (!submittedBy)  { statusEl.textContent='You must be logged in to submit.'; statusEl.className='error'; return; }
+
+  const srs = Array.from(document.querySelectorAll('input[name="nr-sr"]:checked')).map(c=>c.value).join(', ');
+
+  submitBtn.disabled = true;
+  submitBtn.innerHTML = '<span class="nr-spinner"></span> Submitting…';
+  statusEl.textContent=''; statusEl.className='';
+
+  try {
+    const newRow = await insertRequest({
+      wo_link:         woLink,
+      service_request: srs,
+      action:          document.getElementById('nr-action').value,
+      deliver_parts:   document.getElementById('nr-deliver').value,
+      notes:           document.getElementById('nr-notes').value.trim(),
+      submitted_by:    submittedBy,
+      status:          'New Request'
+    });
+
+    // Optimistic update — add to local cache and render immediately
+    // (realtime will also fire but deduplication handles it)
+    if (newRow && !allRows.find(r => r.id === newRow.id)) {
+      allRows = [newRow, ...allRows];
+      renderBoard();
+      buildRequesterFilter();
+      updatePageTitle();
+    }
+
+    submitBtn.innerHTML = '✓ Submitted!';
+    statusEl.textContent = 'Card added.'; statusEl.className = 'success';
+    showToast('New request submitted!');
+    setTimeout(closeModal, 900);
+    setTimeout(showSubmitConfirm, 1000);
+  } catch(err) {
+    submitBtn.disabled = false; submitBtn.textContent = 'Submit Request';
+    statusEl.textContent = 'Error: '+err.message; statusEl.className = 'error';
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+// METRICS
+// ═══════════════════════════════════════════════════════════
+function loadMetrics() {
+  const panel = document.getElementById('metrics-panel');
+  panel.innerHTML = '<div class="metrics-loading">Computing metrics…</div>';
+  const [startMs, endMs] = getDateRange();
+  renderMetrics(computeMetrics(allRows, startMs, endMs));
+}
+
+function computeMetrics(rows, startMs, endMs) {
+  const nowEst   = new Date(new Date().toLocaleString('en-US',{timeZone:'America/New_York'}));
+  const todayKey = nowEst.toISOString().slice(0,10);
+
+  const dailyMap = {};
+  for (let d=29;d>=0;d--) {
+    const dt=new Date(nowEst.getTime()-d*86400000);
+    const key=dt.toLocaleDateString('en-CA',{timeZone:'America/New_York'});
+    const lbl=dt.toLocaleDateString('en-US',{timeZone:'America/New_York',month:'short',day:'numeric'});
+    dailyMap[key]={date:lbl,count:0};
+  }
+  const HOUR_START=7, HOUR_END=18;
+  const hourlyMap={};
+  for (let h=HOUR_START;h<=HOUR_END;h++) {
+    const lbl=h<12?h+'am':h===12?'12pm':(h-12)+'pm';
+    hourlyMap[h]={hour:h,label:lbl,count:0};
+  }
+
+  const ADVISOR_NAMES = Object.keys(ADVISOR_PASSWORDS);
+  const respMins=[], userRespMins={}, reqMap={};
+  ADVISOR_NAMES.forEach(n => userRespMins[n] = []);
+  let completedToday=0, totalFiltered=0;
+
+  rows.forEach(r => {
+    const ms = rowMs(r);
+    const scMs = r.status_changed_at ? new Date(r.status_changed_at).getTime() : null;
+
+    // Daily (always last 30 days, no filter)
+    if (ms) {
+      const dk = new Date(ms).toLocaleDateString('en-CA',{timeZone:'America/New_York'});
+      if (dailyMap[dk]) dailyMap[dk].count++;
+    }
+
+    // Range filter
+    const inRange = (startMs==null||(ms!=null&&ms>=startMs)) && (endMs==null||(ms!=null&&ms<=endMs));
+    if (!inRange) return;
+    totalFiltered++;
+
+    // Hourly
+    if (ms) {
+      const h = parseInt(new Date(ms).toLocaleString('en-US',{timeZone:'America/New_York',hour:'numeric',hour12:false}),10);
+      if (!isNaN(h) && h>=HOUR_START && h<=HOUR_END && hourlyMap[h]) hourlyMap[h].count++;
+    }
+
+    // Response times
+    if ((r.status==='Completed'||r.status==='Ordered') && ms && scMs) {
+      const mins = Math.round((scMs-ms)/60000);
+      if (mins>=0) {
+        respMins.push(mins);
+        const cb = r.completed_by||'';
+        ADVISOR_NAMES.forEach(n => { if (cb === n) userRespMins[n].push(mins); });
+      }
+      const scKey = new Date(scMs).toLocaleDateString('en-CA',{timeZone:'America/New_York'});
+      if (scKey===todayKey) completedToday++;
+    }
+
+    // By requester
+    const sub = (r.submitted_by||'').trim();
+    if (sub) {
+      if (!reqMap[sub]) reqMap[sub]={name:sub,total:0,completed:0,ordered:0};
+      reqMap[sub].total++;
+      if (r.status==='Completed') reqMap[sub].completed++;
+      if (r.status==='Ordered')   reqMap[sub].ordered++;
+    }
+  });
+
+  let rt={avg:null,min:null,max:null,median:null,count:0};
+  if (respMins.length) {
+    respMins.sort((a,b)=>a-b);
+    const sum=respMins.reduce((a,b)=>a+b,0);
+    rt={avg:Math.round(sum/respMins.length),min:respMins[0],max:respMins[respMins.length-1],median:respMins[Math.floor(respMins.length/2)],count:respMins.length};
+  }
+
+  const userAvg={};
+  ADVISOR_NAMES.forEach(n => userAvg[n] = null);
+  ADVISOR_NAMES.forEach(n=>{
+    const a=userRespMins[n];
+    if(a.length){const s=a.reduce((x,y)=>x+y,0);userAvg[n]=Math.round(s/a.length);}
+  });
+
+  // User totals (completed+ordered in period)
+  const userTotals={};
+  ADVISOR_NAMES.forEach(n => userTotals[n] = {period:0});
+  rows.forEach(r=>{
+    if(!(r.status==='Completed'||r.status==='Ordered')) return;
+    const scMs=r.status_changed_at?new Date(r.status_changed_at).getTime():null;
+    if(!scMs) return;
+    const inR=(startMs==null||scMs>=startMs)&&(endMs==null||scMs<=endMs);
+    if(!inR) return;
+    const cb=r.completed_by||'';
+    ADVISOR_NAMES.forEach(n => { if(cb===n) userTotals[n].period++; });
+  });
+
+  return {
+    totalAll: rows.length,
+    totalFiltered,
+    completedToday,
+    responseTimes: rt,
+    dailyCounts: Object.values(dailyMap),
+    hourlyCounts: Object.values(hourlyMap),
+    byRequester: Object.values(reqMap).sort((a,b)=>b.total-a.total).slice(0,20),
+    userAvgResponse: userAvg,
+    userTotals
+  };
+}
+
+function getPeriodLabel() {
+  switch(datePreset) {
+    case 'today': return 'Today'; case 'yesterday': return 'Yesterday';
+    case 'week': return 'This Week'; case 'month': return 'This Month';
+    case 'year': return 'This Year'; case 'all': return 'All Time';
+    case 'custom': {
+      const f=document.getElementById('date-from').value, t=document.getElementById('date-to').value;
+      if(f&&t&&f!==t) return f+' → '+t; if(f) return f; return 'Custom';
+    }
+    default: return '';
+  }
+}
+
+function renderMetrics(data) {
+  const panel = document.getElementById('metrics-panel'); panel.innerHTML = '';
+  if (!data) { panel.innerHTML='<div class="metrics-loading">No data.</div>'; return; }
+  const { responseTimes: rt, totalAll, totalFiltered, completedToday } = data;
+  const period = getPeriodLabel();
+
+  // Stat cards
+  const grid = document.createElement('div'); grid.className = 'metrics-grid';
+  [
+    {label:'Total (All Time)',  value:totalAll,                            sub:'all requests ever'},
+    {label:'In Period',         value:totalFiltered,                       sub:period},
+    {label:'Completed Today',   value:completedToday,                      sub:'status changed today EST'},
+    {label:'Avg Response Time', value:fmtDur(rt.avg),                      sub:rt.count?rt.count+' completed in period':'move cards to generate data'},
+    {label:'Fastest Response',  value:fmtDur(rt.min),                      sub:'min — '+period},
+    {label:'Median Response',   value:fmtDur(rt.median),                   sub:'50th pct — '+period}
+  ].forEach(s => {
+    const sc=document.createElement('div'); sc.className='stat-card';
+    sc.innerHTML='<div class="stat-label">'+s.label+'</div><div class="stat-value">'+s.value+'</div><div class="stat-sub">'+s.sub+'</div>';
+    grid.appendChild(sc);
+  });
+  panel.appendChild(grid);
+
+  // Daily bar chart
+  const ds = document.createElement('div'); ds.className='metrics-section';
+  ds.innerHTML='<div class="metrics-section-title">Daily Submissions — Last 30 Days <span class="metrics-section-sub">(always full range)</span></div>';
+  const dc = document.createElement('div'); dc.className='bar-chart';
+  const mc = Math.max(...data.dailyCounts.map(d=>d.count),1);
+  data.dailyCounts.forEach(d => {
+    const col=document.createElement('div'); col.className='bar-col';
+    const wrap=document.createElement('div'); wrap.className='bar-wrap';
+    const bar=document.createElement('div'); bar.className='bar';
+    bar.dataset.count=d.count; bar.style.height=Math.max((d.count/mc)*100,d.count>0?4:0)+'px';
+    wrap.appendChild(bar);
+    const lbl=document.createElement('div'); lbl.className='bar-label'; lbl.textContent=d.date;
+    col.appendChild(wrap); col.appendChild(lbl); dc.appendChild(col);
+  });
+  ds.appendChild(dc); panel.appendChild(ds);
+
+  // Hourly
+  const hs = document.createElement('div'); hs.className='metrics-section';
+  hs.innerHTML='<div class="metrics-section-title">Peak Hours <span class="metrics-section-sub">7am–6pm EST — '+period+'</span></div>';
+  const hc2=data.hourlyCounts.map(h=>h.count); const mh=Math.max(...hc2,1); const tp=mh*0.75;
+  const he=document.createElement('div'); he.className='bar-chart-hourly';
+  data.hourlyCounts.forEach(h=>{
+    const col=document.createElement('div'); col.className='bar-col';
+    const wrap=document.createElement('div'); wrap.className='bar-wrap';
+    const bar=document.createElement('div'); bar.className='bar'+(h.count>=tp&&h.count>0?' bar-peak':'');
+    bar.dataset.count=h.count+' req'+(h.count!==1?'s':'');
+    bar.style.height=Math.max((h.count/mh)*120,h.count>0?4:0)+'px';
+    wrap.appendChild(bar);
+    const lbl=document.createElement('div'); lbl.className='bar-label'; lbl.textContent=h.label;
+    col.appendChild(wrap); col.appendChild(lbl); he.appendChild(col);
+  });
+  hs.appendChild(he);
+  if (hc2.every(c=>c===0)) {
+    const nd=document.createElement('div'); nd.style.cssText='color:#9ca3af;font-size:13px;margin-top:10px'; nd.textContent='No requests in this period.'; hs.appendChild(nd);
+  } else {
+    const leg=document.createElement('div'); leg.className='peak-legend';
+    leg.innerHTML='<div class="peak-legend-item"><div class="peak-legend-dot" style="background:#f59e0b"></div>Normal</div><div class="peak-legend-item"><div class="peak-legend-dot" style="background:#ef4444"></div>Peak (top 25%)</div>';
+    hs.appendChild(leg);
+  }
+  panel.appendChild(hs);
+
+  // Two col: response times + advisor metrics
+  const tc=document.createElement('div'); tc.className='metrics-two-col';
+
+  const rts=document.createElement('div'); rts.className='metrics-section';
+  rts.innerHTML='<div class="metrics-section-title">Response Time Breakdown <span class="metrics-section-sub">— '+period+'</span></div>';
+  if (rt.count) {
+    const rg=document.createElement('div'); rg.className='rt-grid';
+    [{label:'Average',value:fmtDur(rt.avg)},{label:'Median',value:fmtDur(rt.median)},{label:'Fastest',value:fmtDur(rt.min)},{label:'Slowest',value:fmtDur(rt.max)}].forEach(item=>{
+      const el=document.createElement('div'); el.className='rt-item';
+      el.innerHTML='<div class="rt-label">'+item.label+'</div><div class="rt-value">'+item.value+'</div><div class="rt-unit">submission → done</div>';
+      rg.appendChild(el);
+    });
+    rts.appendChild(rg);
+  } else {
+    rts.innerHTML+='<div style="color:#6b7280;font-size:14px;padding:10px 0">Response times populate as cards are completed.</div>';
+  }
+  tc.appendChild(rts);
+
+  const as=document.createElement('div'); as.className='metrics-section';
+  as.innerHTML='<div class="metrics-section-title">Part Advisor Metrics <span class="metrics-section-sub">— '+period+'</span></div>';
+  const ag=document.createElement('div'); ag.className='rt-grid';
+  Object.keys(ADVISOR_PASSWORDS).forEach(name=>{
+    const am=data.userAvgResponse[name]; const to=data.userTotals[name]||{period:0};
+    const at=document.createElement('div'); at.className='rt-item';
+    at.innerHTML='<div class="rt-label">'+name+' — Avg Response</div><div class="rt-value">'+(am==null?'No data':fmtDur(am))+'</div><div class="rt-unit">submission → done</div>';
+    ag.appendChild(at);
+    const ct2=document.createElement('div'); ct2.className='rt-item';
+    ct2.innerHTML='<div class="rt-label">'+name+' — Completed</div><div class="rt-value">'+(to.period||0)+'</div><div class="rt-unit">in this period</div>';
+    ag.appendChild(ct2);
+  });
+  as.appendChild(ag); tc.appendChild(as);
+  panel.appendChild(tc);
+
+  // By requester
+  const qs=document.createElement('div'); qs.className='metrics-section';
+  qs.innerHTML='<div class="metrics-section-title">Requests by Submitter <span class="metrics-section-sub">— '+period+'</span></div>';
+  if (data.byRequester.length) {
+    const mt=data.byRequester[0].total; const tbl=document.createElement('table'); tbl.className='req-table';
+    tbl.innerHTML='<thead><tr><th>Name</th><th>Total</th><th>Completed</th><th>Ordered</th></tr></thead>';
+    const tb=document.createElement('tbody');
+    data.byRequester.forEach(r=>{
+      const tr=document.createElement('tr');
+      tr.innerHTML='<td><div class="req-bar-wrap"><span style="min-width:120px">'+r.name+'</span><div class="req-bar-track"><div class="req-bar-fill" style="width:'+Math.round((r.total/mt)*100)+'%"></div></div></div></td><td>'+r.total+'</td><td style="color:#16a34a">'+r.completed+'</td><td style="color:#9333ea">'+r.ordered+'</td>';
+      tb.appendChild(tr);
+    });
+    tbl.appendChild(tb); qs.appendChild(tbl);
+  } else {
+    qs.innerHTML+='<div style="color:#6b7280;font-size:14px;padding:10px 0">No data in this period.</div>';
+  }
+  panel.appendChild(qs);
+}
+
+// ═══════════════════════════════════════════════════════════
+// TAB SWITCHING
+// ═══════════════════════════════════════════════════════════
+function switchTab(tab) {
+  currentTab = tab;
+  document.getElementById('tab-board').classList.toggle('active', tab==='board');
+  document.getElementById('tab-metrics').classList.toggle('active', tab==='metrics');
+  document.getElementById('board-root').style.display = tab==='board' ? '' : 'none';
+  document.getElementById('metrics-panel').classList.toggle('visible', tab==='metrics');
+  document.getElementById('requester-filter')?.closest('.top-bar-left')?.querySelectorAll('.filter-label, #requester-filter').forEach(el=>{
+    el.style.display = tab==='board' ? '' : 'none';
+  });
+  updateFab();
+  if (tab==='metrics') loadMetrics();
+}
+
+function onBoardClick() {
+  switchTab('board');
+}
+
+function updateFab() {
+  // Technicians and Advisors can submit requests — but must be logged in
+  const fab = document.getElementById('new-request-fab');
+  fab.style.display = (currentTab === 'board' && currentUser) ? 'block' : 'none';
+}
+
+// ═══════════════════════════════════════════════════════════
+// LOGIN SYSTEM
+// ═══════════════════════════════════════════════════════════
+function openLoginModal() {
+  resetLoginModal();
+  document.getElementById('login-backdrop').classList.add('show');
+  setTimeout(() => document.getElementById('login-name-search').focus(), 120);
+}
+function closeLoginModal() {
+  document.getElementById('login-backdrop').classList.remove('show');
+}
+
+function switchLoginRole(role) {
+  loginRole = role;
+  document.getElementById('tab-tech').classList.toggle('active', role === 'tech');
+  document.getElementById('tab-advisor').classList.toggle('active', role === 'advisor');
+  document.getElementById('login-pw-field').style.display = role === 'advisor' ? '' : 'none';
+  document.getElementById('login-submit-btn').className = role === 'tech' ? 'tech-btn' : 'advisor-btn';
+  document.getElementById('login-submit-btn').textContent = role === 'tech' ? 'Sign In as Technician' : 'Sign In as Parts Advisor';
+  document.getElementById('login-hint').textContent = role === 'tech'
+    ? 'Technicians can submit requests and add comments.'
+    : 'Advisors have full access to move and complete requests.';
+  const badge = document.getElementById('login-selected-badge');
+  badge.className = 'login-selected-badge ' + (role === 'tech' ? 'tech-badge' : 'advisor-badge');
+  document.getElementById('login-err').textContent = '';
+  // Rebuild name list for advisor (only advisor names)
+  buildLoginDropdown('');
+}
+
+function resetLoginModal() {
+  loginRole = 'tech';
+  switchLoginRole('tech');
+  clearLoginName();
+  document.getElementById('login-pw').value = '';
+  document.getElementById('login-err').textContent = '';
+}
+
+function getLoginNames() {
+  if (loginRole === 'tech') {
+    // Always start with TECH_NAMES, then merge in any names from Supabase data
+    const fromData = allRows.map(r=>(r.submitted_by||'').trim()).filter(Boolean);
+    const merged = [...new Set([...TECH_NAMES, ...fromData])].sort((a,b)=>a.localeCompare(b));
+    return merged;
+  } else {
+    return Object.keys(ADVISOR_PASSWORDS).sort();
+  }
+}
+
+function buildLoginDropdown(filter) {
+  const drop = document.getElementById('login-name-dropdown');
+  const q = (filter || '').toLowerCase();
+  const names = getLoginNames().filter(n => !q || n.toLowerCase().includes(q));
+  drop.innerHTML = '';
+  if (!names.length) {
+    drop.innerHTML = '<div class="login-search-option no-match">No match</div>';
+  } else {
+    names.forEach((name, i) => {
+      const d = document.createElement('div'); d.className = 'login-search-option';
+      d.textContent = name;
+      d.addEventListener('mousedown', e => { e.preventDefault(); selectLoginName(name); });
+      drop.appendChild(d);
+    });
+  }
+  loginDropHiIdx = -1;
+}
+
+function selectLoginName(name) {
+  document.getElementById('login-name-value').value = name;
+  document.getElementById('login-name-search').value = '';
+  document.getElementById('login-selected-name').textContent = name;
+  const badge = document.getElementById('login-selected-badge');
+  badge.style.display = 'flex';
+  badge.className = 'login-selected-badge ' + (loginRole === 'tech' ? 'tech-badge' : 'advisor-badge');
+  document.getElementById('login-name-dropdown').classList.remove('open');
+  document.getElementById('login-err').textContent = '';
+  if (loginRole === 'advisor') setTimeout(() => document.getElementById('login-pw').focus(), 80);
+}
+
+function clearLoginName() {
+  document.getElementById('login-name-value').value = '';
+  document.getElementById('login-name-search').value = '';
+  document.getElementById('login-selected-name').textContent = '';
+  document.getElementById('login-selected-badge').style.display = 'none';
+}
+
+function submitLogin() {
+  const name = document.getElementById('login-name-value').value.trim();
+  const err  = document.getElementById('login-err');
+  if (!name) { err.textContent = 'Please select your name.'; return; }
+
+  if (loginRole === 'advisor') {
+    const pw = document.getElementById('login-pw').value;
+    if (!ADVISOR_PASSWORDS[name] || ADVISOR_PASSWORDS[name] !== pw) {
+      err.textContent = 'Incorrect password. Try again.'; return;
+    }
+  }
+
+  currentUser = name;
+  currentRole = loginRole;
+  canEdit     = (loginRole === 'advisor');
+
+  try { localStorage.setItem('parts_session', JSON.stringify({ user: name, role: loginRole })); } catch(e) {}
+
+  closeLoginModal();
+  updateSessionBar();
+  updateTopBarVisibility();
+  updateLunchUI();
+  updateFab();
+  renderBoard();
+  showToast('Welcome, ' + name + (loginRole === 'advisor' ? ' 🛠️' : ' 🔧'));
+}
+
+function logout() {
+  currentUser = null;
+  currentRole = null;
+  canEdit     = false;
+  try { localStorage.removeItem('parts_session'); } catch(e) {}
+  updateSessionBar();
+  updateTopBarVisibility();
+  updateLunchUI();
+  updateFab();
+  renderBoard();
+  showToast('Logged out');
+}
+
+function updateSessionBar() {
+  const bar     = document.getElementById('session-bar');
+  const openBtn = document.getElementById('login-open-btn');
+  const nameEl  = document.getElementById('session-name');
+  const iconEl  = document.getElementById('session-role-icon');
+
+  document.body.classList.toggle('advisor-mode', currentRole === 'advisor');
+
+  if (currentUser) {
+    bar.className = 'show ' + (currentRole === 'advisor' ? 'advisor-bar' : 'tech-bar');
+    nameEl.textContent  = currentUser + (currentRole === 'advisor' ? ' (Advisor)' : ' (Tech)');
+    iconEl.textContent  = currentRole === 'advisor' ? '🛠️' : '🔧';
+    openBtn.style.display = 'none';
+  } else {
+    bar.className = '';
+    openBtn.style.display = '';
+  }
+}
+
+function restoreSession() {
+  try {
+    const s = localStorage.getItem('parts_session');
+    if (!s) return false; // no session stored — fresh visit, silent
+    const { user, role } = JSON.parse(s);
+    if (!user || !role) { localStorage.removeItem('parts_session'); return false; }
+    // Validate advisor still exists
+    if (role === 'advisor' && !ADVISOR_PASSWORDS[user]) {
+      localStorage.removeItem('parts_session');
+      return false;
+    }
+    currentUser = user;
+    currentRole = role;
+    canEdit     = (role === 'advisor');
+    updateSessionBar();
+    updateTopBarVisibility();
+    return true;
+  } catch(e) {
+    try { localStorage.removeItem('parts_session'); } catch(e2) {}
+    return false;
+  }
+}
+
+// Login modal keyboard / dropdown wiring (called once on load)
+function initLoginSearch() {
+  const input = document.getElementById('login-name-search');
+  const drop  = document.getElementById('login-name-dropdown');
+  if (!input || !drop) return;
+
+  input.addEventListener('focus',  function() { buildLoginDropdown(this.value); drop.classList.add('open'); });
+  input.addEventListener('input',  function() { buildLoginDropdown(this.value); drop.classList.add('open'); });
+  input.addEventListener('blur',   function() { setTimeout(() => drop.classList.remove('open'), 150); });
+  input.addEventListener('keydown', function(e) {
+    const opts = drop.querySelectorAll('.login-search-option:not(.no-match)');
+    if (e.key === 'ArrowDown') { e.preventDefault(); loginDropHiIdx = Math.min(loginDropHiIdx+1, opts.length-1); opts.forEach((o,i)=>o.classList.toggle('highlighted',i===loginDropHiIdx)); }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); loginDropHiIdx = Math.max(loginDropHiIdx-1, 0); opts.forEach((o,i)=>o.classList.toggle('highlighted',i===loginDropHiIdx)); }
+    else if (e.key === 'Enter') { e.preventDefault(); if(loginDropHiIdx>=0&&opts[loginDropHiIdx]) selectLoginName(opts[loginDropHiIdx].textContent); else if(opts.length===1) selectLoginName(opts[0].textContent); }
+    else if (e.key === 'Escape') { drop.classList.remove('open'); closeLoginModal(); }
+  });
+  // Press Enter in password field to submit
+  document.getElementById('login-pw').addEventListener('keydown', e => { if (e.key === 'Enter') submitLogin(); });
+  // Close on backdrop click
+  document.getElementById('login-backdrop').addEventListener('click', e => { if (e.target === document.getElementById('login-backdrop')) closeLoginModal(); });
+}
+
+function updateLoginUI() {
+  // Re-render cards to reflect current permissions
+  document.querySelectorAll('.notes-area').forEach(t => t.disabled = !canEdit);
+  document.querySelectorAll('.btn-completed,.btn-ordered,.card-delete').forEach(b => b.disabled = !canEdit);
+  document.querySelectorAll('.card').forEach(c => c.draggable = !!canEdit);
+  updateFab();
+}
+
+// ═══════════════════════════════════════════════════════════
+// MY REQUESTS TOGGLE
+// ═══════════════════════════════════════════════════════════
+function toggleMyRequests() {
+  myRequestsActive = !myRequestsActive;
+  const btn = document.getElementById('my-requests-btn');
+  btn.classList.toggle('active', myRequestsActive);
+  btn.textContent = myRequestsActive ? '👤 My Requests ✓' : '👤 My Requests';
+  // If My Requests is on, clear the requester dropdown so they don't conflict
+  if (myRequestsActive && currentFilterReq) {
+    currentFilterReq = '';
+    const sel = document.getElementById('requester-filter');
+    if (sel) sel.value = '';
+  }
+  renderBoard();
+}
+
+function updateTopBarVisibility() {
+  const myBtn        = document.getElementById('my-requests-btn');
+  const reqLabel     = document.getElementById('requester-filter-label');
+  const reqSelect    = document.getElementById('requester-filter');
+
+  // My Requests: visible to any logged-in user
+  if (myBtn) myBtn.style.display = currentUser ? 'inline-flex' : 'none';
+
+  // Requester filter: advisors only
+  const showReq = currentRole === 'advisor';
+  if (reqLabel)  reqLabel.style.display  = showReq ? '' : 'none';
+  if (reqSelect) reqSelect.style.display = showReq ? '' : 'none';
+
+  // If advisor logs out, reset requester filter
+  if (!showReq && currentFilterReq) {
+    currentFilterReq = '';
+    if (reqSelect) reqSelect.value = '';
+  }
+
+  // Reset My Requests on logout
+  if (!currentUser && myRequestsActive) {
+    myRequestsActive = false;
+    if (myBtn) { myBtn.classList.remove('active'); myBtn.textContent = '👤 My Requests'; }
+  }
+}
+
+function updatePageTitle() {
+  const newCount = allRows.filter(r => r.status === 'New Request').length;
+  document.title = newCount > 0
+    ? '(' + newCount + ') Parts Request Dashboard'
+    : 'Parts Request Dashboard';
+}
+
+// ═══════════════════════════════════════════════════════════
+// REQUESTER FILTER
+// ═══════════════════════════════════════════════════════════
+function buildRequesterFilter() {
+  const sel = document.getElementById('requester-filter'); if(!sel) return;
+  const names = new Set(allRows.map(r=>(r.submitted_by||'').trim()).filter(Boolean));
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">All</option>';
+  Array.from(names).sort((a,b)=>a.toLowerCase().localeCompare(b.toLowerCase())).forEach(n=>{
+    const o=document.createElement('option'); o.value=n; o.textContent=n; sel.appendChild(o);
+  });
+  if (cur && names.has(cur)) { sel.value=cur; currentFilterReq=cur; }
+  else { sel.value=''; currentFilterReq=''; }
+}
+
+// ═══════════════════════════════════════════════════════════
+// ON LUNCH
+// ═══════════════════════════════════════════════════════════
+async function fetchLunchStates() {
+  const { data, error } = await sbClient.from('dashboard_settings').select('*');
+  if (error) { console.error('fetchLunchStates:', error); return; }
+  lunchStates = {};
+  (data || []).forEach(row => { lunchStates[row.id] = row; });
+  updateLunchUI();
+}
+
+async function toggleLunch() {
+  if (!currentUser || currentRole !== 'advisor') return;
+  const current = lunchStates[currentUser] || {};
+  const goingOnLunch = !current.on_lunch;
+  const patch = {
+    on_lunch: goingOnLunch,
+    lunch_started_at: goingOnLunch ? new Date().toISOString() : null
+  };
+  const { error } = await sbClient.from('dashboard_settings').update(patch).eq('id', currentUser);
+  if (error) { showToast('Lunch update failed: ' + error.message, 'error'); return; }
+  lunchStates[currentUser] = { ...current, ...patch };
+  updateLunchUI();
+  showToast(goingOnLunch ? 'Lunch mode on — techs will be notified' : '✅ Welcome back!');
+}
+
+function updateLunchUI() {
+  // Update the lunch button for the logged-in advisor
+  const btn = document.getElementById('lunch-btn');
+  if (btn && currentRole === 'advisor' && currentUser) {
+    const myState = lunchStates[currentUser] || {};
+    btn.style.display = 'inline-flex';
+    if (myState.on_lunch) {
+      btn.textContent = '✅ Back from Lunch';
+      btn.classList.add('on-lunch');
+    } else {
+      btn.textContent = 'On Lunch';
+      btn.classList.remove('on-lunch');
+    }
+  } else if (btn) {
+    btn.style.display = 'none';
+  }
+
+  // Update the banner for everyone
+  const onLunchAdvisors = Object.values(lunchStates).filter(s => s.on_lunch);
+  const banner   = document.getElementById('lunch-banner');
+  const bannerTxt = document.getElementById('lunch-banner-text');
+
+  if (!onLunchAdvisors.length) {
+    banner.classList.remove('show');
+    clearInterval(lunchBannerTimer);
+    return;
+  }
+
+  banner.classList.add('show');
+  const names = onLunchAdvisors.map(s => s.id).join(' & ');
+  const verb  = onLunchAdvisors.length > 1 ? 'are' : 'is';
+  bannerTxt.textContent = `${names} ${verb} on lunch — expect a slight delay with requests`;
+
+  // Tick the elapsed time
+  clearInterval(lunchBannerTimer);
+  function updateTimes() {
+    const timeEl = document.getElementById('lunch-banner-time');
+    if (!timeEl) return;
+    const parts = onLunchAdvisors.map(s => {
+      if (!s.lunch_started_at) return null;
+      const mins = Math.floor((Date.now() - new Date(s.lunch_started_at).getTime()) / 60000);
+      if (mins < 1) return null;
+      const name = s.id.split(' ')[0]; // first name only for brevity
+      return `${name}: ${mins} min${mins !== 1 ? 's' : ''}`;
+    }).filter(Boolean);
+    timeEl.textContent = parts.length ? '(' + parts.join(', ') + ')' : '';
+  }
+  updateTimes();
+  lunchBannerTimer = setInterval(updateTimes, 30000);
+}
+
+// ═══════════════════════════════════════════════════════════
+// SUBMIT CONFIRM BANNER
+// ═══════════════════════════════════════════════════════════
+let submitConfirmTimer = null;
+function showSubmitConfirm() {
+  // Only show for technicians — advisors do not see this
+  if (currentRole !== 'tech') return;
+  const banner = document.getElementById('submit-confirm-banner');
+  if (!banner) return;
+  banner.classList.add('show');
+  clearTimeout(submitConfirmTimer);
+  submitConfirmTimer = setTimeout(hideSubmitConfirm, 6000);
+}
+function hideSubmitConfirm() {
+  const banner = document.getElementById('submit-confirm-banner');
+  if (banner) banner.classList.remove('show');
+  clearTimeout(submitConfirmTimer);
+}
+
+// ═══════════════════════════════════════════════════════════
+// TOAST
+// ═══════════════════════════════════════════════════════════
+function showToast(msg, type) {
+  const cont=document.getElementById('toast-container'); if(!cont) return;
+  const t=document.createElement('div'); t.className='toast'+(type==='error'?' error':'');
+  t.textContent=msg; cont.appendChild(t);
+  setTimeout(()=>{ t.style.transition='opacity 0.2s,transform 0.2s'; t.style.opacity='0'; t.style.transform='translateY(4px)'; setTimeout(()=>t.remove(),200); },3000);
+}
+
+// ═══════════════════════════════════════════════════════════
+// ZOOM
+// ═══════════════════════════════════════════════════════════
+const ZOOM_MIN = 60;
+const ZOOM_MAX = 130;
+const ZOOM_STEP = 10;
+let zoomLevel = 100;
+
+function initZoom() {
+  try { zoomLevel = parseInt(localStorage.getItem('dashboard_zoom') || '100', 10); } catch(e) {}
+  if (isNaN(zoomLevel)) zoomLevel = 100;
+  applyZoom();
+}
+
+function adjustZoom(delta) {
+  zoomLevel = Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, zoomLevel + delta));
+  applyZoom();
+  try { localStorage.setItem('dashboard_zoom', zoomLevel); } catch(e) {}
+}
+
+function applyZoom() {
+  const shell = document.getElementById('board-shell');
+  const label = document.getElementById('zoom-level');
+  const outBtn = document.getElementById('zoom-out-btn');
+  const inBtn  = document.getElementById('zoom-in-btn');
+  if (shell)  shell.style.zoom = (zoomLevel / 100);
+  if (label)  label.textContent = zoomLevel + '%';
+  if (outBtn) outBtn.disabled = zoomLevel <= ZOOM_MIN;
+  if (inBtn)  inBtn.disabled  = zoomLevel >= ZOOM_MAX;
+}
+
+// ═══════════════════════════════════════════════════════════
+// BOOT
+// ═══════════════════════════════════════════════════════════
+window.addEventListener('load', function() {
+  // Date init
+  const today = todayEst();
+  document.getElementById('date-from').value = today;
+  document.getElementById('date-to').value   = today;
+
+  document.getElementById('date-preset').addEventListener('change', function() {
+    datePreset = this.value;
+    document.getElementById('custom-date-inputs').classList.toggle('visible', datePreset==='custom');
+    if (currentTab==='board') renderBoard(); else loadMetrics();
+  });
+  document.getElementById('date-from').addEventListener('change', () => { if(currentTab==='board') renderBoard(); else loadMetrics(); });
+  document.getElementById('date-to').addEventListener('change',   () => { if(currentTab==='board') renderBoard(); else loadMetrics(); });
+  document.getElementById('requester-filter').addEventListener('change', function() {
+    currentFilterReq = this.value; renderBoard();
+  });
+
+  // Restore saved session
+  restoreSession();
+  updateTopBarVisibility();
+  initZoom();
+
+  // Init login modal search
+  initLoginSearch();
+
+  // Show config banner or init Supabase
+  if (!loadConfig()) {
+    document.getElementById('config-banner').classList.add('show');
+  } else {
+    initSupabase();
+  }
+
+  // Timers
+  setInterval(updateAgeTimers, 30000);
+  updateFab();
+});
+</script>
+</body>
+</html>

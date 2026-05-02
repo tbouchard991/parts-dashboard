@@ -355,7 +355,6 @@
     .chip-secondary { background: #dbeafe; color: #075985; }
     .chip-action    { background: #fee2e2; color: #b91c1c; }
     .chip-deliver   { background: #fef9c3; color: #854d0e; }
-    .chip-vehicle   { background: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0; }
 
     .small-row { font-size: 13px; color: #4b5563; }
     .label-inline { font-weight: 700; color: var(--text-sub); margin-right: 4px; text-transform: uppercase; font-size: 11px; letter-spacing: 0.08em; }
@@ -739,8 +738,8 @@
 
 
     /* ── TOAST ──────────────────────────────────────────── */
-    #toast-container { position: fixed; left: 16px; bottom: 16px; display: flex; flex-direction: column; gap: 6px; z-index: 9998; }
-    .toast { max-width: 240px; padding: 8px 12px; border-radius: 8px; font-size: 13px; color: #0f172a; background: #e0f2fe; border: 1px solid #bae6fd; box-shadow: var(--shadow-md); }
+    #toast-container { position: fixed; top: 24px; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; gap: 10px; z-index: 9998; align-items: center; pointer-events: none; }
+    .toast { max-width: 420px; min-width: 260px; padding: 14px 20px; border-radius: 14px; font-size: 15px; font-weight: 600; color: #0f172a; background: #e0f2fe; border: 1px solid #bae6fd; box-shadow: 0 8px 32px rgba(15,23,42,0.18); text-align: center; pointer-events: all; }
     .toast.error { background: #fee2e2; border-color: #fecaca; color: #7f1d1d; }
 
     /* ── RESPONSIVE ─────────────────────────────────────── */
@@ -756,6 +755,342 @@
       .top-bar-right { align-items: flex-start; }
       .nr-two-col { grid-template-columns: 1fr; }
     }
+
+    /* ── PRIORITY ───────────────────────────────────────── */
+    .priority-toggle-wrap { display: flex; align-items: center; gap: 10px; margin-top: 4px; }
+    .priority-toggle-label { font-size: 13px; font-weight: 600; color: var(--text-sub); }
+    .priority-switch { position: relative; width: 40px; height: 22px; flex-shrink: 0; }
+    .priority-switch input { opacity: 0; width: 0; height: 0; }
+    .priority-slider {
+      position: absolute; inset: 0; border-radius: 999px;
+      background: #e5e7eb; cursor: pointer; transition: background 0.2s;
+    }
+    .priority-slider::before {
+      content: ''; position: absolute; width: 16px; height: 16px;
+      left: 3px; top: 3px; border-radius: 50%; background: #fff;
+      transition: transform 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    }
+    .priority-switch input:checked + .priority-slider { background: #ef4444; }
+    .priority-switch input:checked + .priority-slider::before { transform: translateX(18px); }
+    .priority-badge {
+      display: inline-flex; align-items: center; gap: 4px;
+      background: #fef2f2; color: #b91c1c; border: 1.5px solid #fecaca;
+      border-radius: 999px; padding: 2px 9px; font-size: 11px; font-weight: 700;
+      letter-spacing: 0.04em; white-space: nowrap; width: fit-content;
+    }
+    .card.priority-urgent {
+      border-color: #ef4444 !important;
+      box-shadow: 0 8px 28px rgba(239,68,68,0.30) !important;
+    }
+    .card.priority-urgent .card-header-name { color: #b91c1c; }
+
+    /* ── OFFLINE BANNER ─────────────────────────────────── */
+    #offline-banner {
+      display: none; align-items: center; justify-content: center; gap: 8px;
+      padding: 9px 18px; background: #fef3c7; border: 1px solid #fcd34d;
+      border-radius: 10px; margin-bottom: 10px; font-size: 13px; font-weight: 600; color: #92400e;
+    }
+    #offline-banner.show { display: flex; }
+    #offline-reconnect-btn {
+      border: none; background: #f59e0b; color: #fff; border-radius: 999px;
+      padding: 3px 12px; font-size: 12px; font-weight: 700; cursor: pointer;
+      transition: background 0.15s;
+    }
+    #offline-reconnect-btn:hover { background: #d97706; }
+
+    /* ── SOUND/NOTIF TOGGLE ─────────────────────────────── */
+    #sound-notif-btn {
+      padding: 5px 12px; border-radius: 999px; border: 1.5px solid var(--border);
+      background: var(--surface); color: var(--text-sub); font-size: 12px; font-weight: 700;
+      cursor: pointer; box-shadow: var(--shadow-sm); transition: all 0.15s; white-space: nowrap;
+    }
+    #sound-notif-btn.enabled { border-color: #3b82f6; color: #2563eb; background: #eff6ff; }
+    #sound-notif-btn:hover { border-color: #3b82f6; color: #2563eb; }
+
+    /* ── DAILY AVG LINE ─────────────────────────────────── */
+    .bar-chart-wrap { position: relative; }
+    .avg-line {
+      position: absolute; left: 0; right: 0; border-top: 2px dashed #6366f1;
+      pointer-events: none;
+    }
+    .avg-line-label {
+      position: absolute; right: 0; top: -16px;
+      font-size: 10px; font-weight: 700; color: #6366f1; white-space: nowrap;
+    }
+  
+
+    /* ── TV MODE ────────────────────────────────────────── */
+    #tv-panel {
+      display: none;
+    }
+    #tv-panel.visible {
+      display: block;
+    }
+    .tv-header {
+      display: flex; flex-direction: column; align-items: center;
+      padding: 10px 0 18px; gap: 10px;
+    }
+    .tv-title {
+      font-size: 22px; font-weight: 800; color: var(--text);
+      display: flex; align-items: center; gap: 10px;
+    }
+    .tv-count-badge {
+      background: var(--blue); color: #fff; border-radius: 999px;
+      padding: 3px 14px; font-size: 18px; font-weight: 800;
+    }
+    .tv-clock {
+      font-size: 65px; font-weight: 800; color: var(--text);
+      font-variant-numeric: tabular-nums; letter-spacing: 0.02em;
+      text-align: center;
+    }
+    .tv-empty {
+      text-align: center; padding: 80px 20px;
+      font-size: 28px; font-weight: 700; color: var(--text-muted);
+    }
+    .tv-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(901px, 1fr));
+      gap: 53px;
+    }
+    .tv-card {
+      background: var(--surface); border-radius: 47px;
+      border: 2.5px solid #fecaca;
+      box-shadow: 0 10px 32px rgba(248,113,113,0.22);
+      padding: 56px 65px 53px;
+      display: flex; flex-direction: column; gap: 29px;
+      position: relative;
+    }
+    .tv-card.tv-urgent {
+      border-color: #ef4444;
+      box-shadow: 0 10px 36px rgba(239,68,68,0.35);
+      background: #fff8f8;
+    }
+    @keyframes tv-urgent-pulse {
+      0%,100% { box-shadow: 0 10px 36px rgba(239,68,68,0.35); }
+      50%      { box-shadow: 0 10px 48px rgba(239,68,68,0.65); }
+    }
+    .tv-card.tv-urgent { animation: tv-urgent-pulse 1.6s ease-in-out infinite; }
+
+    .tv-card-top {
+      display: flex; align-items: flex-start; justify-content: space-between; gap: 10px;
+    }
+    .tv-card-name {
+      font-size: 65px; font-weight: 800; color: var(--text); line-height: 1.1;
+    }
+    .tv-card-badges { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; flex-shrink: 0; }
+    .tv-waiter-badge {
+      background: #fef2f2; color: #b91c1c; border: 2px solid #fecaca;
+      border-radius: 999px; padding: 9px 33px; font-size: 33px; font-weight: 800;
+      white-space: nowrap;
+    }
+    .tv-age-badge {
+      background: #f3f4f6; color: #6b7280; border-radius: 999px;
+      padding: 9px 29px; font-size: 31px; font-weight: 700; white-space: nowrap;
+    }
+    .tv-age-badge.warn  { background: #fef3c7; color: #92400e; }
+    .tv-age-badge.alert { background: #fee2e2; color: #991b1b; }
+    .tv-wo {
+      font-size: 47px; font-weight: 700; color: var(--blue);
+      word-break: break-all; line-height: 1.3;
+    }
+    .tv-chips {
+      display: flex; flex-wrap: wrap; gap: 18px;
+    }
+    .tv-chip {
+      font-size: 36px; font-weight: 700; padding: 13px 33px;
+      border-radius: 999px; white-space: nowrap;
+    }
+    .tv-chip-sr      { background: #dbeafe; color: #075985; }
+    .tv-chip-action  { background: #fee2e2; color: #b91c1c; }
+    .tv-chip-deliver { background: #fef9c3; color: #854d0e; }
+    .tv-notes {
+      font-size: 38px; color: #4b5563; font-style: italic; line-height: 1.5;
+      border-left: 7px solid #e5e7eb; padding-left: 29px;
+    }
+    .tv-footer {
+      font-size: 31px; color: var(--text-muted); font-weight: 600; margin-top: 2px;
+    }
+
+    /* hide top-bar row2 filters in TV mode */
+    body.tv-mode .top-bar-row2 { display: none; }
+    body.tv-mode #board-shell { max-width: 100% !important; }
+    body.tv-mode { background: #f0f2f5; }
+
+
+    /* ── MOBILE REQUEST FAB ─────────────────────────────── */
+    #mobile-request-fab {
+      display: none;
+      position: fixed; bottom: 28px; right: 210px; z-index: 900;
+    }
+    #mobile-request-fab button {
+      background: #0369a1; color: #fff; border: none; border-radius: 999px;
+      padding: 15px 28px; font-size: 14px; font-weight: 700; cursor: pointer;
+      box-shadow: 0 6px 24px rgba(3,105,161,0.45);
+      display: flex; align-items: center; gap: 8px;
+      transition: background 0.15s, transform 0.12s, box-shadow 0.15s;
+    }
+    #mobile-request-fab button:hover { background: #075985; transform: translateY(-2px); box-shadow: 0 10px 32px rgba(3,105,161,0.55); }
+
+    /* ── MOBILE REQUEST MODAL ───────────────────────────── */
+    #mr-backdrop {
+      display: none; position: fixed; inset: 0;
+      background: rgba(15,23,42,0.55); backdrop-filter: blur(3px);
+      z-index: 1000; align-items: center; justify-content: center; padding: 20px;
+    }
+    #mr-backdrop.open { display: flex; }
+    #mr-modal {
+      background: var(--surface); border-radius: 20px;
+      width: 100%; max-width: 560px; max-height: 92vh; overflow-y: auto;
+      box-shadow: 0 24px 64px rgba(15,23,42,0.4);
+      animation: modalIn 0.2s ease;
+    }
+    #mr-modal-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 20px 24px 14px; border-bottom: 1px solid var(--border);
+    }
+    #mr-modal-title { font-size: 17px; font-weight: 700; display: flex; align-items: center; gap: 10px; }
+    .mr-title-badge {
+      background: #e0f2fe; color: #0369a1; font-size: 11px; font-weight: 700;
+      letter-spacing: 0.08em; text-transform: uppercase; padding: 3px 8px; border-radius: 999px;
+    }
+    #mr-modal-body { padding: 18px 24px 10px; display: flex; flex-direction: column; gap: 14px; }
+    #mr-modal-footer {
+      padding: 14px 24px 20px; border-top: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    }
+    #mr-submit-btn {
+      background: #0369a1; color: #fff; border: none; border-radius: 999px;
+      padding: 10px 26px; font-size: 14px; font-weight: 700; cursor: pointer;
+      box-shadow: 0 4px 14px rgba(3,105,161,0.35); display: flex; align-items: center; gap: 7px;
+      transition: background 0.15s, transform 0.12s;
+    }
+    #mr-submit-btn:hover:not(:disabled) { background: #075985; transform: translateY(-1px); }
+    #mr-submit-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+    #mr-cancel-btn { background: none; border: none; color: var(--text-sub); font-size: 14px; cursor: pointer; font-weight: 500; }
+    #mr-cancel-btn:hover { color: var(--text); }
+    #mr-submit-status { font-size: 13px; }
+    #mr-submit-status.success { color: #16a34a; }
+    #mr-submit-status.error   { color: #dc2626; }
+
+    /* vehicle type tabs */
+    .mr-vtype-tabs { display: flex; gap: 8px; }
+    .mr-vtype-tab {
+      flex: 1; padding: 10px 0; border-radius: 10px; border: 2px solid var(--border);
+      background: #f9fafb; font-size: 13px; font-weight: 700; cursor: pointer;
+      color: var(--text-sub); transition: all 0.15s; text-align: center;
+    }
+    .mr-vtype-tab.active { border-color: #0369a1; background: #e0f2fe; color: #0369a1; }
+
+    /* WO multi-field */
+    .mr-wo-list { display: flex; flex-direction: column; gap: 6px; }
+    .mr-wo-row { display: flex; gap: 6px; align-items: center; }
+    .mr-wo-input {
+      flex: 1; padding: 9px 12px; border-radius: 10px;
+      border: 1.5px solid var(--border); background: #f9fafb;
+      color: var(--text); font-size: 14px; font-family: inherit; outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .mr-wo-input:focus { border-color: #0369a1; box-shadow: 0 0 0 3px rgba(3,105,161,0.12); background: #fff; }
+    .mr-wo-remove {
+      width: 28px; height: 28px; border-radius: 50%; border: none;
+      background: #fee2e2; color: #dc2626; font-size: 14px; font-weight: 700;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; transition: background 0.12s;
+    }
+    .mr-wo-remove:hover { background: #fecaca; }
+    #mr-add-wo-btn {
+      align-self: flex-start; background: none; border: 1.5px dashed #93c5fd;
+      border-radius: 8px; padding: 6px 14px; font-size: 12px; font-weight: 700;
+      color: #2563eb; cursor: pointer; transition: all 0.12s;
+    }
+    #mr-add-wo-btn:hover { background: #eff6ff; border-color: #3b82f6; }
+
+    /* mobile card styling */
+    .card.mobile-request {
+      border-color: #bae6fd !important;
+      box-shadow: 0 8px 22px rgba(3,105,161,0.18) !important;
+      background: #f0f9ff;
+    }
+    .mobile-badge {
+      display: inline-flex; align-items: center; gap: 4px;
+      background: #e0f2fe; color: #0369a1; border: 1.5px solid #bae6fd;
+      border-radius: 999px; padding: 2px 9px; font-size: 11px; font-weight: 700;
+      white-space: nowrap; width: fit-content;
+    }
+    .mr-appt-row {
+      display: flex; flex-wrap: wrap; gap: 6px; align-items: center;
+      font-size: 12px; font-weight: 600; color: var(--text-sub);
+    }
+    .mr-appt-chip {
+      background: #f0fdf4; color: #15803d; border: 1px solid #bbf7d0;
+      border-radius: 999px; padding: 2px 10px; font-size: 12px; font-weight: 700;
+    }
+    .mr-dsp-chip {
+      background: #faf5ff; color: #7e22ce; border: 1px solid #e9d5ff;
+      border-radius: 999px; padding: 2px 10px; font-size: 12px; font-weight: 700;
+    }
+    .mr-wo-list-display { display: flex; flex-direction: column; gap: 3px; margin: 2px 0; }
+    .mr-wo-item { font-size: 14px; font-weight: 600; color: var(--blue); }
+
+
+    /* ── METRICS SUB-TABS ───────────────────────────────── */
+    .metrics-sub-tabs {
+      display: flex; gap: 6px; flex-wrap: wrap;
+      padding: 0 0 4px 0; border-bottom: 2px solid var(--border); margin-bottom: 18px;
+    }
+    .metrics-sub-tab {
+      padding: 7px 18px; border-radius: 999px; border: 1.5px solid var(--border);
+      background: var(--surface); color: var(--text-sub); font-size: 13px; font-weight: 700;
+      cursor: pointer; transition: all 0.15s;
+    }
+    .metrics-sub-tab:hover { border-color: #93c5fd; color: #2563eb; }
+    .metrics-sub-tab.active { background: var(--blue); color: #fff; border-color: var(--blue); box-shadow: 0 3px 10px rgba(37,99,235,0.25); }
+    .metrics-sub-tab.mobile-tab.active { background: #0369a1; border-color: #0369a1; box-shadow: 0 3px 10px rgba(3,105,161,0.25); }
+    .metrics-pane { display: none; flex-direction: column; gap: 22px; }
+    .metrics-pane.active { display: flex; }
+
+    /* ── DONUT / SPLIT CHART ────────────────────────────── */
+    .split-chart-wrap { display: flex; align-items: center; gap: 24px; flex-wrap: wrap; }
+    .split-donut { position: relative; width: 110px; height: 110px; flex-shrink: 0; }
+    .split-donut svg { width: 110px; height: 110px; transform: rotate(-90deg); }
+    .split-donut-label {
+      position: absolute; inset: 0; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; font-weight: 800;
+    }
+    .split-donut-pct { font-size: 22px; line-height: 1; color: var(--text); }
+    .split-donut-sub { font-size: 10px; color: var(--text-muted); font-weight: 600; margin-top: 2px; }
+    .split-legend { display: flex; flex-direction: column; gap: 8px; }
+    .split-legend-item { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+    .split-legend-dot { width: 12px; height: 12px; border-radius: 3px; flex-shrink: 0; }
+    .split-legend-name { font-weight: 600; color: var(--text); min-width: 80px; }
+    .split-legend-val { font-weight: 700; color: var(--text); }
+    .split-legend-pct { font-size: 11px; color: var(--text-muted); margin-left: 2px; }
+
+    /* ── LEAD TIME HISTOGRAM ────────────────────────────── */
+    .lead-hist { display: flex; align-items: flex-end; gap: 6px; height: 80px; margin-top: 8px; }
+    .lead-hist-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; }
+    .lead-hist-bar { width: 100%; background: #0891b2; border-radius: 4px 4px 0 0; min-height: 2px; }
+    .lead-hist-lbl { font-size: 9px; color: var(--text-muted); font-weight: 600; white-space: nowrap; }
+    .lead-hist-cnt { font-size: 10px; font-weight: 700; color: var(--text-sub); }
+
+
+    /* ── CHART TOOLTIP ──────────────────────────────────── */
+    .chart-tooltip {
+      position: fixed; z-index: 9999; pointer-events: none;
+      background: #1e293b; color: #f1f5f9;
+      padding: 8px 12px; border-radius: 8px;
+      font-size: 12px; font-weight: 600; line-height: 1.5;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+      white-space: nowrap; opacity: 0;
+      transition: opacity 0.1s;
+    }
+    .chart-tooltip.show { opacity: 1; }
+    .chart-tooltip-row { display: flex; align-items: center; gap: 6px; }
+    .chart-tooltip-dot { width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; }
+    .chart-tooltip-label { color: #94a3b8; font-weight: 500; }
+    .chart-tooltip-val { color: #f1f5f9; font-weight: 700; }
+    .chart-bar-col { cursor: pointer; }
+
   </style>
 </head>
 <body>
@@ -786,6 +1121,7 @@
         <button class="tab-btn active" id="tab-board"   onclick="onBoardClick()">📋 Board</button>
         <button class="tab-btn"        id="tab-metrics" onclick="switchTab('metrics')">📊 Metrics</button>
         <button id="my-requests-btn"   onclick="toggleMyRequests()">👤 My Requests</button>
+        <button class="tab-btn" id="tab-tv" onclick="switchTab('tv')" style="display:none">📺 TV Mode</button>
       </div>
       <div class="top-bar-right">
         <div class="top-bar-right-row">
@@ -795,6 +1131,7 @@
             <button id="session-logout" onclick="logout()">Log out</button>
           </div>
           <button id="lunch-btn" onclick="toggleLunch()">On Lunch</button>
+          <button id="sound-notif-btn" onclick="toggleSoundNotif()" title="Toggle sounds &amp; notifications">🔕 Sound: Off</button>
           <button id="login-open-btn" onclick="openLoginModal()">🔐 Log In</button>
         </div>
         <div class="dashboard-credit">Created by Thomas Bouchard</div>
@@ -835,14 +1172,25 @@
     <span class="lunch-banner-time" id="lunch-banner-time"></span>
   </div>
 
+  <!-- Offline Banner -->
+  <div id="offline-banner">
+    <span>⚠️ Connection lost — data may be stale.</span>
+    <button id="offline-reconnect-btn" onclick="reconnectSupabase()">Reconnect</button>
+    <span id="offline-last-update" style="font-size:11px;opacity:0.7;margin-left:4px;"></span>
+  </div>
+
   <div id="board-root"></div>
   <div class="metrics-panel" id="metrics-panel">
     <div class="metrics-loading">Loading metrics…</div>
   </div>
+  <div id="tv-panel"></div>
 </div>
 
 <div id="new-request-fab">
   <button onclick="openModal()">＋ New Request</button>
+</div>
+<div id="mobile-request-fab">
+  <button onclick="openMobileModal()">📱 Mobile Request</button>
 </div>
 
 <!-- New Request Modal -->
@@ -875,16 +1223,14 @@
           <label class="nr-sr-label"><input type="checkbox" name="nr-sr" value="SR-12"> SR-12</label>
         </div>
       </div>
+      <div class="nr-field">
+        <label class="nr-label" for="nr-urgent">Appointment Type</label>
+        <select id="nr-urgent" class="nr-select">
+          <option value="">Normal</option>
+          <option value="waiter">Waiter</option>
+        </select>
+      </div>
       <div class="nr-two-col">
-        <div class="nr-field">
-          <label class="nr-label" for="nr-vehicle-type">Vehicle Type <span class="nr-required">*</span></label>
-          <select id="nr-vehicle-type" class="nr-select">
-            <option value="">— Select —</option>
-            <option value="EDV">EDV</option>
-            <option value="R1">R1</option>
-            <option value="R2">R2</option>
-          </select>
-        </div>
         <div class="nr-field">
           <label class="nr-label" for="nr-action">Action</label>
           <select id="nr-action" class="nr-select">
@@ -894,10 +1240,8 @@
             <option>Parts Inquiry</option>
           </select>
         </div>
-      </div>
-      <div class="nr-two-col">
         <div class="nr-field">
-          <label class="nr-label" for="nr-deliver">Deliver Parts</label>
+          <label class="nr-label" for="nr-deliver">Deliver Parts <span id="nr-deliver-remember" style="font-size:10px;color:#9ca3af;font-weight:500;cursor:pointer;margin-left:4px;" onclick="rememberBay()"></span></label>
           <select id="nr-deliver" class="nr-select">
             <option value="">— Select —</option>
             <option>Mobile Staging Area</option>
@@ -906,7 +1250,6 @@
             <option>Bay 4</option><option>Bay 5</option><option>Bay 6</option><option>Bay 7</option>
           </select>
         </div>
-      </div>
       </div>
       <div class="nr-field">
         <label class="nr-label" for="nr-notes">Notes</label>
@@ -928,6 +1271,73 @@
   </div>
 </div>
 
+<!-- Mobile Request Modal -->
+<div id="mr-backdrop">
+  <div id="mr-modal" role="dialog" aria-modal="true">
+    <div id="mr-modal-header">
+      <div id="mr-modal-title">Mobile Request <span class="mr-title-badge">📱 Mobile</span></div>
+      <button id="mr-close-btn" onclick="closeMobileModal()" aria-label="Close" style="background:#f3f4f6;border:none;border-radius:50%;width:30px;height:30px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;color:#6b7280;">✕</button>
+    </div>
+    <div id="mr-modal-body">
+      <!-- Vehicle Type -->
+      <div class="nr-field">
+        <label class="nr-label">Vehicle Type <span class="nr-required">*</span></label>
+        <div class="mr-vtype-tabs">
+          <button class="mr-vtype-tab active" id="mr-tab-consumer" onclick="setMrVtype('consumer')">🚗 Consumer</button>
+          <button class="mr-vtype-tab" id="mr-tab-fleet" onclick="setMrVtype('fleet')">🚛 Fleet</button>
+        </div>
+      </div>
+      <!-- DSP Location (fleet only) -->
+      <div class="nr-field" id="mr-dsp-field" style="display:none">
+        <label class="nr-label" for="mr-dsp">DSP Location <span class="nr-required">*</span></label>
+        <select id="mr-dsp" class="nr-select">
+          <option value="">— Select —</option>
+          <option>DAE3</option>
+          <option>DAE8</option>
+          <option>DDP1</option>
+          <option>DJE3</option>
+          <option>DPH8</option>
+          <option>DPH9</option>
+        </select>
+      </div>
+      <!-- Date of Appointment -->
+      <div class="nr-field">
+        <label class="nr-label" for="mr-date">Date of Appointment <span class="nr-required">*</span></label>
+        <input type="date" id="mr-date" class="nr-input" style="font-size:14px;">
+      </div>
+      <!-- WO Links -->
+      <div class="nr-field">
+        <label class="nr-label">WO Links <span class="nr-required">*</span></label>
+        <div class="mr-wo-list" id="mr-wo-list">
+          <div class="mr-wo-row">
+            <input type="text" class="mr-wo-input" placeholder="https://… or WO-000000000" autocomplete="off">
+          </div>
+        </div>
+        <button id="mr-add-wo-btn" onclick="addMrWoField()">+ Add WO</button>
+      </div>
+      <!-- Notes -->
+      <div class="nr-field">
+        <label class="nr-label" for="mr-notes">Notes</label>
+        <textarea id="mr-notes" class="nr-textarea" placeholder="Any additional context…"></textarea>
+      </div>
+      <!-- Submitted By -->
+      <div class="nr-field">
+        <label class="nr-label">Submitted By</label>
+        <div id="mr-submitted-by-display" style="padding:9px 12px;border-radius:10px;border:1.5px solid var(--border);background:#f3f4f6;font-size:14px;font-weight:600;color:#374151;">—</div>
+        <input type="hidden" id="mr-submitted-by">
+      </div>
+    </div>
+    <div id="mr-modal-footer">
+      <button id="mr-cancel-btn" onclick="closeMobileModal()">Cancel</button>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span id="mr-submit-status"></span>
+        <button id="mr-submit-btn" onclick="submitMobileRequest()">Submit Request</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="chart-tooltip" class="chart-tooltip"></div>
 <div id="toast-container"></div>
 
 <!-- Submit Confirmation Banner (techs only, top-center) -->
@@ -1043,6 +1453,11 @@ let loginDropHiIdx       = -1;
 let myRequestsActive     = false;  // My Requests toggle
 let lunchStates          = {};     // { advisorName: { on_lunch, lunch_started_at } }
 let lunchBannerTimer     = null;
+let notificationsEnabled = false;
+let soundEnabled         = false;
+let isOnline             = true;
+let lastUpdateMs         = null;
+let offlineCheckTimer    = null;
 
 // ═══════════════════════════════════════════════════════════
 // SUPABASE INIT
@@ -1055,11 +1470,12 @@ function initSupabase() {
   }
   setRtStatus('connecting');
   fetchAll().then(() => {
+    markOnline();
     setupRealtime();
     renderBoard();
     buildRequesterFilter();
     updatePageTitle();
-  });
+  }).catch(() => markOffline());
   fetchLunchStates();
 }
 
@@ -1187,42 +1603,95 @@ function handleRealtimeEvent(payload) {
     }
     fireNewRequestAlert(newRec);
   } else if (eventType === 'UPDATE') {
+    const prevRec = allRows.find(r => r.id === newRec.id);
+    const prevStatus = prevRec ? prevRec.status : null;
     allRows = allRows.map(r => r.id === newRec.id ? newRec : r);
+    fireTechStatusAlert(newRec, prevStatus);
   } else if (eventType === 'DELETE') {
     allRows = allRows.filter(r => r.id !== old.id);
   }
   if (currentTab === 'board') { renderBoard(); buildRequesterFilter(); }
+  if (currentTab === 'tv') renderTvMode();
   updatePageTitle();
 }
 
+function fireTechStatusAlert(rec, prevStatus) {
+  // Only notify if a tech is logged in and this is their card
+  if (!currentUser || currentRole !== 'tech') return;
+  if ((rec.submitted_by || '').trim() !== currentUser.trim()) return;
+  if (rec.status === prevStatus) return;
+  if (!['In Process', 'Completed', 'Ordered'].includes(rec.status)) return;
+
+  const woText = rec.wo_link
+    ? ' — ' + String(rec.wo_link).split(/[\n,]+/)[0].trim()
+    : '';
+  const advisor = rec.completed_by || 'Parts Advisor';
+
+  const configs = {
+    'In Process': {
+      title: '🔧 Request Picked Up',
+      body:  advisor + ' is working on your request' + woText,
+      toast: '🔧 ' + advisor + ' picked up your request' + woText,
+    },
+    'Completed': {
+      title: '✅ Parts Ready',
+      body:  'Your parts are ready' + woText,
+      toast: '✅ Your parts are ready' + woText,
+    },
+    'Ordered': {
+      title: '📦 Parts Ordered',
+      body:  advisor + ' ordered your parts' + woText,
+      toast: '📦 Your parts have been ordered' + woText,
+    },
+  };
+
+  const cfg = configs[rec.status];
+  if (!cfg) return;
+
+  showToast(cfg.toast);
+  playChime('chime');
+
+  if ('Notification' in window && Notification.permission === 'granted' && notificationsEnabled) {
+    try {
+      const n = new Notification(cfg.title, { body: cfg.body, tag: 'status-' + rec.id });
+      setTimeout(() => n.close(), 10000);
+    } catch(e) {}
+  }
+}
+
 function handleNewComment(comment) {
-  // Only notify if a tech is logged in and the comment was posted by someone else
   if (!currentUser || !currentRole) return;
   if ((comment.author || '').trim() === currentUser.trim()) return; // own comment, skip
 
-  // Find the request this comment belongs to
   const req = allRows.find(r => r.id === comment.request_id);
   if (!req) return;
 
-  // Only notify the tech who submitted that request
+  // Techs: only notify if it's their own request
   if (currentRole === 'tech' && (req.submitted_by || '').trim() !== currentUser.trim()) return;
 
   // Update comment count badge on the open card if visible
   refreshCommentCount(comment.request_id);
 
-  const advisor = comment.author || 'Parts Advisor';
+  const author  = comment.author || 'Someone';
   const woText  = req.wo_link ? ' on ' + String(req.wo_link).split(/[\n,]+/)[0].trim() : '';
+  const isFromTech = !Object.keys(ADVISOR_PASSWORDS).includes(author);
 
-  // In-app toast
-  showToast('💬 ' + advisor + ' commented' + woText);
+  // Toast — advisors get labelled differently
+  if (currentRole === 'advisor' && isFromTech) {
+    showToast('💬 ' + author + ' commented' + woText);
+  } else {
+    showToast('💬 ' + author + ' commented' + woText);
+  }
 
   // Sound
   playChime();
 
   // Browser notification
   if ('Notification' in window && Notification.permission === 'granted' && notificationsEnabled) {
-    const title = '💬 New comment from ' + advisor;
-    const body  = comment.body || '';
+    const title = currentRole === 'advisor' && isFromTech
+      ? '💬 Tech comment from ' + author
+      : '💬 New comment from ' + author;
+    const body  = (comment.body || '') + (woText ? woText : '');
     try {
       const n = new Notification(title, { body, tag: 'comment-' + comment.id });
       setTimeout(() => n.close(), 8000);
@@ -1312,6 +1781,14 @@ function getFilteredRows() {
 function groupRows(rows) {
   const g = { 'New Request':[], 'In Process':[], 'Completed':[], 'Ordered':[] };
   rows.forEach(r => { if (g[r.status]) g[r.status].push(r); });
+  // Urgent cards float to top in New Request and In Process
+  ['New Request','In Process'].forEach(s => {
+    g[s].sort((a,b) => {
+      if (b.is_urgent && !a.is_urgent) return 1;
+      if (a.is_urgent && !b.is_urgent) return -1;
+      return rowMs(b) - rowMs(a);
+    });
+  });
   ['Completed','Ordered'].forEach(s => g[s].sort((a,b) => rowMs(b)-rowMs(a)));
   return g;
 }
@@ -1412,26 +1889,62 @@ function buildCard(r) {
     card.appendChild(indicator);
   }
 
-  // WO link
+  // Mobile badge + appointment info
+  if (r.request_type === 'mobile') {
+    card.classList.add('mobile-request');
+    const mb = document.createElement('span'); mb.className = 'mobile-badge';
+    mb.textContent = '📱 ' + (r.mobile_vtype === 'fleet' ? 'Fleet' : 'Consumer');
+    card.insertBefore(mb, card.firstChild);
+    // Appointment row
+    const apptRow = document.createElement('div'); apptRow.className = 'mr-appt-row';
+    if (r.appt_date) {
+      const dc = document.createElement('span'); dc.className = 'mr-appt-chip';
+      dc.textContent = '📅 ' + r.appt_date; apptRow.appendChild(dc);
+    }
+    if (r.dsp_location) {
+      const dsp = document.createElement('span'); dsp.className = 'mr-dsp-chip';
+      dsp.textContent = '📍 ' + r.dsp_location; apptRow.appendChild(dsp);
+    }
+    if (apptRow.children.length) card.appendChild(apptRow);
+  }
+
+  // WO link — mobile requests show as stacked list, standard as inline
   const wrow = document.createElement('div'); wrow.className = 'wo-row';
   const wval = document.createElement('div'); wval.className = 'wo-value';
   if (r.wo_link) {
     const parts = String(r.wo_link).split(/[\n,]+/).map(s=>s.trim()).filter(Boolean);
-    parts.forEach((p, i) => {
-      let label = p;
-      const m = p.match(/(WO-\d{9,})/);
-      if (m) label = m[1];
-      const a = document.createElement('a'); a.href = p; a.className = 'wo-link';
-      a.textContent = label; a.title = p;
-      if (i > 0) wval.appendChild(document.createTextNode('  '));
-      wval.appendChild(a);
-    });
+    if (r.request_type === 'mobile' && parts.length > 1) {
+      const listDiv = document.createElement('div'); listDiv.className = 'mr-wo-list-display';
+      parts.forEach(p => {
+        const m = p.match(/(WO-\d{9,})/);
+        const label = m ? m[1] : p;
+        const a = document.createElement('a'); a.href = p; a.className = 'wo-link mr-wo-item';
+        a.textContent = label; a.title = p;
+        listDiv.appendChild(a);
+      });
+      wval.appendChild(listDiv);
+    } else {
+      parts.forEach((p, i) => {
+        const m = p.match(/(WO-\d{9,})/);
+        const label = m ? m[1] : p;
+        const a = document.createElement('a'); a.href = p; a.className = 'wo-link';
+        a.textContent = label; a.title = p;
+        if (i > 0) wval.appendChild(document.createTextNode('  '));
+        wval.appendChild(a);
+      });
+    }
   } else { wval.textContent = '—'; }
   wrow.appendChild(wval); card.appendChild(wrow);
 
+  // Priority badge — urgent cards
+  if (r.is_urgent) {
+    card.classList.add('priority-urgent');
+    const pb = document.createElement('span'); pb.className = 'priority-badge'; pb.innerHTML = '🔴 Waiter';
+    card.insertBefore(pb, card.firstChild);
+  }
+
   // Chips
   const meta = document.createElement('div'); meta.className = 'meta-row';
-  if (r.vehicle_type)      { const c=document.createElement('span'); c.className='chip chip-vehicle';    c.textContent='🚗 '+r.vehicle_type;      meta.appendChild(c); }
   if (r.service_request) { const c=document.createElement('span'); c.className='chip chip-secondary'; c.textContent=r.service_request; meta.appendChild(c); }
   if (r.action)           { const c=document.createElement('span'); c.className='chip chip-action';    c.textContent=r.action;          meta.appendChild(c); }
   if (r.deliver_parts)    { const c=document.createElement('span'); c.className='chip chip-deliver';   c.textContent='Deliver: '+r.deliver_parts; meta.appendChild(c); }
@@ -1846,6 +2359,16 @@ function updateAgeTimers() {
     else if (ageMins >= 3) el.classList.add('nr-age-warn');
   });
   updateStaleness();
+  // TV mode age badges
+  if (currentTab === 'tv') {
+    document.querySelectorAll('.tv-age-badge').forEach(el => {
+      const ms = parseInt(el.dataset.requestedMs, 10);
+      if (!ms) return;
+      const ageMins = Math.floor((Date.now() - ms) / 60000);
+      el.textContent = '⏱ ' + (fmtAge(ms) || 'Just now');
+      el.className = 'tv-age-badge' + (ageMins >= 6 ? ' alert' : ageMins >= 3 ? ' warn' : '');
+    });
+  }
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -1854,8 +2377,24 @@ function updateAgeTimers() {
 function openModal() {
   if (!currentUser) { showToast('Please log in to submit a request', 'error'); openLoginModal(); return; }
   ['nr-wo-link','nr-notes'].forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
-  ['nr-action','nr-deliver','nr-vehicle-type'].forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
+  ['nr-action','nr-deliver'].forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
   document.querySelectorAll('input[name="nr-sr"]').forEach(cb => cb.checked = false);
+  // Reset priority
+  const urgentSel = document.getElementById('nr-urgent');
+  if (urgentSel) urgentSel.value = '';
+  // Pre-fill saved bay
+  try {
+    const savedBay = localStorage.getItem('pref_bay_' + currentUser);
+    const delEl = document.getElementById('nr-deliver');
+    if (delEl && savedBay) {
+      delEl.value = savedBay;
+      const lbl = document.getElementById('nr-deliver-remember');
+      if (lbl) lbl.textContent = '(saved)';
+    } else {
+      const lbl = document.getElementById('nr-deliver-remember');
+      if (lbl) lbl.textContent = '';
+    }
+  } catch(e) {}
   // Autofill submitted-by from session
   document.getElementById('nr-submitted-by').value = currentUser;
   const disp = document.getElementById('nr-submitted-by-display');
@@ -1865,6 +2404,26 @@ function openModal() {
   document.getElementById('nr-backdrop').classList.add('open');
   setTimeout(() => document.getElementById('nr-wo-link').focus(), 120);
 }
+
+// Auto-format WO number on blur: if user types digits only or WO-xxxxxxxxx normalise it
+document.addEventListener('DOMContentLoaded', function() {});
+(function() {
+  function formatWoLink(val) {
+    const v = val.trim();
+    // Pure 9+ digit number → prepend WO-
+    if (/^\d{9,}$/.test(v)) return 'WO-' + v;
+    // WO followed by digits without dash → normalise
+    const m = v.match(/^WO(\d{9,})$/i);
+    if (m) return 'WO-' + m[1];
+    return v; // URL or already formatted — leave as-is
+  }
+  document.addEventListener('blur', function(e) {
+    if (e.target && e.target.id === 'nr-wo-link') {
+      const formatted = formatWoLink(e.target.value);
+      if (formatted !== e.target.value) e.target.value = formatted;
+    }
+  }, true);
+})();
 function closeModal() { document.getElementById('nr-backdrop').classList.remove('open'); }
 document.getElementById('nr-backdrop').addEventListener('click', e => { if (e.target === document.getElementById('nr-backdrop')) closeModal(); });
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
@@ -1878,6 +2437,27 @@ async function submitRequest() {
   if (!woLink)       { statusEl.textContent='WO Link is required.'; statusEl.className='error'; return; }
   if (!submittedBy)  { statusEl.textContent='You must be logged in to submit.'; statusEl.className='error'; return; }
 
+  // Duplicate WO check — warn if same WO is already on the board (not done)
+  if (!submitBtn.dataset.dupConfirmed) {
+    const activeStatuses = ['New Request', 'In Process'];
+    const woNorm = woLink.trim().toUpperCase().replace(/[^A-Z0-9]/g,'');
+    const duplicate = allRows.find(r => {
+      if (!activeStatuses.includes(r.status)) return false;
+      const existing = (r.wo_link || '').trim().toUpperCase().replace(/[^A-Z0-9]/g,'');
+      return existing && existing === woNorm;
+    });
+    if (duplicate) {
+      const already = duplicate.submitted_by ? ' (submitted by ' + duplicate.submitted_by + ')' : '';
+      statusEl.textContent = '⚠️ This WO is already on the board' + already + '. Click Submit again to confirm.';
+      statusEl.className = 'error';
+      submitBtn.dataset.dupConfirmed = 'true';
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Submit Anyway';
+      return;
+    }
+  }
+  delete submitBtn.dataset.dupConfirmed;
+
   const srs = Array.from(document.querySelectorAll('input[name="nr-sr"]:checked')).map(c=>c.value).join(', ');
 
   submitBtn.disabled = true;
@@ -1888,11 +2468,11 @@ async function submitRequest() {
     const newRow = await insertRequest({
       wo_link:         woLink,
       service_request: srs,
-      vehicle_type:    document.getElementById('nr-vehicle-type').value,
       action:          document.getElementById('nr-action').value,
       deliver_parts:   document.getElementById('nr-deliver').value,
       notes:           document.getElementById('nr-notes').value.trim(),
       submitted_by:    submittedBy,
+      is_urgent:       document.getElementById('nr-urgent') && document.getElementById('nr-urgent').value === 'waiter',
       status:          'New Request'
     });
 
@@ -1923,7 +2503,7 @@ function loadMetrics() {
   const panel = document.getElementById('metrics-panel');
   panel.innerHTML = '<div class="metrics-loading">Computing metrics…</div>';
   const [startMs, endMs] = getDateRange();
-  renderMetrics(computeMetrics(allRows, startMs, endMs));
+  const _metrics = computeMetrics(allRows, startMs, endMs); _metrics._startMs=startMs; _metrics._endMs=endMs; renderMetrics(_metrics);
 }
 
 function computeMetrics(rows, startMs, endMs) {
@@ -1935,17 +2515,23 @@ function computeMetrics(rows, startMs, endMs) {
     const dt=new Date(nowEst.getTime()-d*86400000);
     const key=dt.toLocaleDateString('en-CA',{timeZone:'America/New_York'});
     const lbl=dt.toLocaleDateString('en-US',{timeZone:'America/New_York',month:'short',day:'numeric'});
-    dailyMap[key]={date:lbl,count:0};
+    dailyMap[key]={date:lbl,count:0,mobile:0};
   }
-  const HOUR_START=7, HOUR_END=18;
+  const HOUR_START=0, HOUR_END=23;
   const hourlyMap={};
   for (let h=HOUR_START;h<=HOUR_END;h++) {
-    const lbl=h<12?h+'am':h===12?'12pm':(h-12)+'pm';
-    hourlyMap[h]={hour:h,label:lbl,count:0};
+    const lbl=h===0?'12am':h<12?h+'am':h===12?'12pm':(h-12)+'pm';
+    hourlyMap[h]={hour:h,label:lbl,count:0,mobile:0,waiter:0,normal:0,fleet:0,consumer:0};
   }
 
   const ADVISOR_NAMES = Object.keys(ADVISOR_PASSWORDS);
-  const respMins=[], userRespMins={}, reqMap={}, vtMap={};
+  const respMins=[], waitMins=[], userRespMins={}, reqMap={}, actMap={};
+  const mobileRespMins=[], stdRespMins=[];
+  const dspMap={}, leadDays=[];
+  let mobileTotal=0, fleetTotal=0, consumerTotal=0;
+  const DOW_LABELS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const dowMap = {}; const dowMobileMap = {}; DOW_LABELS.forEach(d => { dowMap[d] = 0; dowMobileMap[d] = 0; });
+  let waiterCount = 0;
   ADVISOR_NAMES.forEach(n => userRespMins[n] = []);
   let completedToday=0, totalFiltered=0;
 
@@ -1956,18 +2542,50 @@ function computeMetrics(rows, startMs, endMs) {
     // Daily (always last 30 days, no filter)
     if (ms) {
       const dk = new Date(ms).toLocaleDateString('en-CA',{timeZone:'America/New_York'});
-      if (dailyMap[dk]) dailyMap[dk].count++;
+      if (dailyMap[dk]) { dailyMap[dk].count++; if (r.request_type==='mobile') { const wc=r.wo_link?String(r.wo_link).split(/[\n,]+/).map(s=>s.trim()).filter(Boolean).length:1; dailyMap[dk].mobile=(dailyMap[dk].mobile||0)+wc; dailyMap[dk].count+=wc-1; } }
     }
 
     // Range filter
     const inRange = (startMs==null||(ms!=null&&ms>=startMs)) && (endMs==null||(ms!=null&&ms<=endMs));
     if (!inRange) return;
     totalFiltered++;
+    if (r.is_urgent) waiterCount++;
+
+    // Mobile tracking — count individual WOs, not cards
+    if (r.request_type === 'mobile') {
+      const woCount = r.wo_link ? String(r.wo_link).split(/[\n,]+/).map(s=>s.trim()).filter(Boolean).length : 1;
+      mobileTotal += woCount;
+      if (r.mobile_vtype === 'fleet') {
+        fleetTotal += woCount;
+        const dsp = (r.dsp_location||'').trim();
+        if (dsp) { if (!dspMap[dsp]) dspMap[dsp]=0; dspMap[dsp]+=woCount; }
+      } else {
+        consumerTotal += woCount;
+      }
+      // Lead time: days between submitted and appointment
+      if (r.appt_date && ms) {
+        const apptMs = new Date(r.appt_date+'T12:00:00Z').getTime();
+        const diffDays = Math.round((apptMs - ms) / 86400000);
+        if (diffDays >= 0 && diffDays <= 30) leadDays.push(diffDays);
+      }
+    }
+
+    // Day of week
+    if (ms) {
+      const dowIdx = new Date(ms).toLocaleDateString('en-US',{timeZone:'America/New_York',weekday:'short'});
+      if (dowMap[dowIdx] !== undefined) { const wc2=r.request_type==='mobile'&&r.wo_link?String(r.wo_link).split(/[\n,]+/).map(s=>s.trim()).filter(Boolean).length:1; dowMap[dowIdx]+=wc2; if (r.request_type==='mobile') dowMobileMap[dowIdx]=(dowMobileMap[dowIdx]||0)+wc2; }
+    }
 
     // Hourly
     if (ms) {
       const h = parseInt(new Date(ms).toLocaleString('en-US',{timeZone:'America/New_York',hour:'numeric',hour12:false}),10);
-      if (!isNaN(h) && h>=HOUR_START && h<=HOUR_END && hourlyMap[h]) hourlyMap[h].count++;
+      if (!isNaN(h) && h>=HOUR_START && h<=HOUR_END && hourlyMap[h]) { if (r.request_type==='mobile') { const wc3=r.wo_link?String(r.wo_link).split(/[\n,]+/).map(s=>s.trim()).filter(Boolean).length:1; hourlyMap[h].mobile+=wc3; hourlyMap[h].count+=wc3; if(r.mobile_vtype==='fleet'){hourlyMap[h].fleet+=wc3;}else{hourlyMap[h].consumer+=wc3;} } else if (r.is_urgent) { hourlyMap[h].waiter+=1; hourlyMap[h].count+=1; } else { hourlyMap[h].normal+=1; hourlyMap[h].count+=1; } }
+    }
+
+    // Wait-to-claim: submit → In Process (for currently In Process cards)
+    if (r.status==='In Process' && ms && scMs) {
+      const wm = Math.round((scMs - ms) / 60000);
+      if (wm >= 0) waitMins.push(wm);
     }
 
     // Response times
@@ -1975,6 +2593,8 @@ function computeMetrics(rows, startMs, endMs) {
       const mins = Math.round((scMs-ms)/60000);
       if (mins>=0) {
         respMins.push(mins);
+        if (r.request_type === 'mobile') mobileRespMins.push(mins);
+        else stdRespMins.push(mins);
         const cb = r.completed_by||'';
         ADVISOR_NAMES.forEach(n => { if (cb === n) userRespMins[n].push(mins); });
       }
@@ -1982,23 +2602,25 @@ function computeMetrics(rows, startMs, endMs) {
       if (scKey===todayKey) completedToday++;
     }
 
+    // By action type
+    const act = (r.action||'').trim();
+    if (act) {
+      if (!actMap[act]) actMap[act]={action:act,total:0,completed:0,ordered:0};
+      actMap[act].total++;
+      if (r.status==='Completed') actMap[act].completed++;
+      if (r.status==='Ordered')   actMap[act].ordered++;
+    }
+
     // By requester
     const sub = (r.submitted_by||'').trim();
     if (sub) {
-      if (!reqMap[sub]) reqMap[sub]={name:sub,total:0,completed:0,ordered:0};
+      if (!reqMap[sub]) reqMap[sub]={name:sub,total:0,completed:0,ordered:0,mobile:0,standard:0};
       reqMap[sub].total++;
+      if (r.request_type==='mobile') reqMap[sub].mobile++; else reqMap[sub].standard++;
       if (r.status==='Completed') reqMap[sub].completed++;
       if (r.status==='Ordered')   reqMap[sub].ordered++;
     }
 
-    // By vehicle type
-    const vt = (r.vehicle_type||'').trim();
-    if (vt) {
-      if (!vtMap[vt]) vtMap[vt]={type:vt,total:0,completed:0,ordered:0};
-      vtMap[vt].total++;
-      if (r.status==='Completed') vtMap[vt].completed++;
-      if (r.status==='Ordered')   vtMap[vt].ordered++;
-    }
   });
 
   let rt={avg:null,min:null,max:null,median:null,count:0};
@@ -2028,17 +2650,55 @@ function computeMetrics(rows, startMs, endMs) {
     ADVISOR_NAMES.forEach(n => { if(cb===n) userTotals[n].period++; });
   });
 
+  let wt={avg:null,min:null,max:null,median:null,count:0};
+  if (waitMins.length) {
+    waitMins.sort((a,b)=>a-b);
+    const ws=waitMins.reduce((a,b)=>a+b,0);
+    wt={avg:Math.round(ws/waitMins.length),min:waitMins[0],max:waitMins[waitMins.length-1],median:waitMins[Math.floor(waitMins.length/2)],count:waitMins.length};
+  }
+
+  // Mobile response time stats
+  function calcRt(arr) {
+    if (!arr.length) return {avg:null,min:null,max:null,median:null,count:0};
+    arr.sort((a,b)=>a-b);
+    const sum=arr.reduce((a,b)=>a+b,0);
+    return {avg:Math.round(sum/arr.length),min:arr[0],max:arr[arr.length-1],median:arr[Math.floor(arr.length/2)],count:arr.length};
+  }
+
+  // Lead time buckets: same-day, 1d, 2d, 3-7d, 8+d
+  const leadBuckets = [
+    {label:'Same day', count:0}, {label:'1 day', count:0}, {label:'2 days', count:0},
+    {label:'3–7 days', count:0}, {label:'8+ days', count:0}
+  ];
+  leadDays.forEach(d => {
+    if (d===0) leadBuckets[0].count++;
+    else if (d===1) leadBuckets[1].count++;
+    else if (d===2) leadBuckets[2].count++;
+    else if (d<=7) leadBuckets[3].count++;
+    else leadBuckets[4].count++;
+  });
+
   return {
     totalAll: rows.length,
+    mobileTotal, fleetTotal, consumerTotal,
+    mobileRate: totalFiltered>0 ? Math.round((mobileTotal/totalFiltered)*100) : 0,
+    mobileRt: calcRt(mobileRespMins),
+    stdRt: calcRt(stdRespMins),
+    dspCounts: Object.entries(dspMap).sort((a,b)=>b[1]-a[1]).map(([k,v])=>({dsp:k,count:v})),
+    leadBuckets,
+    waitToClaim: wt,
     totalFiltered,
     completedToday,
     responseTimes: rt,
     dailyCounts: Object.values(dailyMap),
     hourlyCounts: Object.values(hourlyMap),
     byRequester: Object.values(reqMap).sort((a,b)=>b.total-a.total).slice(0,20),
-    byVehicleType: Object.values(vtMap).sort((a,b)=>b.total-a.total),
+    byAction:    Object.values(actMap).sort((a,b)=>b.total-a.total),
     userAvgResponse: userAvg,
-    userTotals
+    userTotals,
+    waiterCount,
+    waiterRate: totalFiltered > 0 ? Math.round((waiterCount / totalFiltered) * 100) : 0,
+    dowCounts: DOW_LABELS.map(d => ({ day: d, count: dowMap[d], mobile: dowMobileMap[d] }))
   };
 }
 
@@ -2055,68 +2715,283 @@ function getPeriodLabel() {
   }
 }
 
+function makeStatCard(label,value,sub,color) {
+  const sc=document.createElement('div'); sc.className='stat-card';
+  if(color) sc.style.borderColor=color;
+  sc.innerHTML='<div class="stat-label">'+label+'</div><div class="stat-value">'+(color?'<span style="color:'+color+'">'+value+'</span>':value)+'</div><div class="stat-sub">'+sub+'</div>';
+  return sc;
+}
+
+function makeDonut(pct, color1, color2, label, sub) {
+  const r=46, cx=55, cy=55, circ=2*Math.PI*r;
+  const dash1 = circ*(pct/100), dash2 = circ - dash1;
+  const wrap=document.createElement('div'); wrap.className='split-chart-wrap';
+  const donut=document.createElement('div'); donut.className='split-donut';
+  donut.innerHTML='<svg viewBox="0 0 110 110"><circle cx="'+cx+'" cy="'+cy+'" r="'+r+'" fill="none" stroke="#e5e7eb" stroke-width="12"/>'
+    +'<circle cx="'+cx+'" cy="'+cy+'" r="'+r+'" fill="none" stroke="'+color1+'" stroke-width="12" stroke-dasharray="'+dash1+' '+dash2+'" stroke-linecap="round"/></svg>'
+    +'<div class="split-donut-label"><div class="split-donut-pct">'+pct+'%</div><div class="split-donut-sub">'+sub+'</div></div>';
+  return donut;
+}
+
 function renderMetrics(data) {
   const panel = document.getElementById('metrics-panel'); panel.innerHTML = '';
   if (!data) { panel.innerHTML='<div class="metrics-loading">No data.</div>'; return; }
   const { responseTimes: rt, totalAll, totalFiltered, completedToday } = data;
   const period = getPeriodLabel();
 
+
+  // ── PANE: OVERVIEW ───────────────────────────────────────
+  const paneOv = document.createElement('div'); paneOv.style.cssText='display:flex;flex-direction:column;gap:22px;';
+
   // Stat cards
   const grid = document.createElement('div'); grid.className = 'metrics-grid';
   [
-    {label:'Total (All Time)',  value:totalAll,                            sub:'all requests ever'},
-    {label:'In Period',         value:totalFiltered,                       sub:period},
-    {label:'Completed Today',   value:completedToday,                      sub:'status changed today EST'},
-    {label:'Avg Response Time', value:fmtDur(rt.avg),                      sub:rt.count?rt.count+' completed in period':'move cards to generate data'},
-    {label:'Fastest Response',  value:fmtDur(rt.min),                      sub:'min — '+period},
-    {label:'Median Response',   value:fmtDur(rt.median),                   sub:'50th pct — '+period}
-  ].forEach(s => {
-    const sc=document.createElement('div'); sc.className='stat-card';
-    sc.innerHTML='<div class="stat-label">'+s.label+'</div><div class="stat-value">'+s.value+'</div><div class="stat-sub">'+s.sub+'</div>';
-    grid.appendChild(sc);
-  });
-  panel.appendChild(grid);
+    {label:'Total (All Time)',  value:totalAll,              sub:'all requests ever'},
+    {label:'In Period',         value:totalFiltered,         sub:period},
+    {label:'Completed Today',   value:completedToday,        sub:'status changed today EST'},
+    {label:'Avg Response Time', value:fmtDur(rt.avg),        sub:rt.count?rt.count+' completed in period':'move cards to generate data'},
+    {label:'Fastest Response',  value:fmtDur(rt.min),        sub:'min — '+period},
+    {label:'Median Response',   value:fmtDur(rt.median),     sub:'50th pct — '+period},
+    {label:'Waiter Requests',   value:data.waiterCount,      sub:data.waiterRate+'% of requests — '+period},
+    {label:'Mobile WOs',        value:data.mobileTotal,      sub:data.mobileRate+'% of all WOs — '+period, color:'#0369a1'},
+  ].forEach(s => { grid.appendChild(makeStatCard(s.label,s.value,s.sub,s.color||null)); });
+  paneOv.appendChild(grid);
 
   // Daily bar chart
   const ds = document.createElement('div'); ds.className='metrics-section';
   ds.innerHTML='<div class="metrics-section-title">Daily Submissions — Last 30 Days <span class="metrics-section-sub">(always full range)</span></div>';
-  const dc = document.createElement('div'); dc.className='bar-chart';
+  const dcWrap = document.createElement('div'); dcWrap.className='bar-chart-wrap'; dcWrap.style.position='relative';
+  const dc = document.createElement('div'); dc.className='bar-chart'; dc.style.position='relative';
   const mc = Math.max(...data.dailyCounts.map(d=>d.count),1);
+  const totalDays = data.dailyCounts.reduce((s,d)=>s+(d.count>0?1:0),0);
+  const avgCount  = totalDays>0 ? data.dailyCounts.reduce((s,d)=>s+d.count,0)/data.dailyCounts.length : 0;
+  const avgPct    = avgCount>0 ? Math.round((avgCount/mc)*100) : 0;
   data.dailyCounts.forEach(d => {
-    const col=document.createElement('div'); col.className='bar-col';
+    const col=document.createElement('div'); col.className='bar-col chart-bar-col';
+    const std = d.count - (d.mobile||0);
+    const ttRows = [{label:d.date+' total',val:d.count+' req'+(d.count!==1?'s':''),color:'#6366f1'}];
+    if (std>0) ttRows.push({label:'Standard',val:std,color:'#2563eb'});
+    if ((d.mobile||0)>0) ttRows.push({label:'Mobile',val:d.mobile,color:'#0891b2'});
+    col.dataset.tt = JSON.stringify(ttRows);
     const wrap=document.createElement('div'); wrap.className='bar-wrap';
-    const bar=document.createElement('div'); bar.className='bar';
-    bar.dataset.count=d.count; bar.style.height=Math.max((d.count/mc)*100,d.count>0?4:0)+'px';
-    wrap.appendChild(bar);
+    const totalH = Math.max((d.count/mc)*100, d.count>0?4:0);
+    const mobileH = d.count>0 ? Math.round((d.mobile||0)/d.count*totalH) : 0;
+    const stdH = totalH - mobileH;
+    const barWrap2 = document.createElement('div'); barWrap2.style.cssText='width:100%;display:flex;flex-direction:column;align-items:stretch;';
+    if (mobileH > 0) {
+      const mbar = document.createElement('div'); mbar.className='bar';
+      mbar.style.cssText='height:'+mobileH+'px;background:#0891b2;border-radius:4px 4px 0 0;min-height:2px;';
+      barWrap2.appendChild(mbar);
+    }
+    const sbar = document.createElement('div'); sbar.className='bar';
+    sbar.style.cssText='height:'+stdH+'px;background:var(--blue);'+(mobileH>0?'border-radius:0;':'border-radius:4px 4px 0 0;')+'min-height:'+(std>0?2:0)+'px;';
+    barWrap2.appendChild(sbar);
+    wrap.appendChild(barWrap2);
     const lbl=document.createElement('div'); lbl.className='bar-label'; lbl.textContent=d.date;
     col.appendChild(wrap); col.appendChild(lbl); dc.appendChild(col);
   });
-  ds.appendChild(dc); panel.appendChild(ds);
-
-  // Hourly
-  const hs = document.createElement('div'); hs.className='metrics-section';
-  hs.innerHTML='<div class="metrics-section-title">Peak Hours <span class="metrics-section-sub">7am–6pm EST — '+period+'</span></div>';
-  const hc2=data.hourlyCounts.map(h=>h.count); const mh=Math.max(...hc2,1); const tp=mh*0.75;
-  const he=document.createElement('div'); he.className='bar-chart-hourly';
-  data.hourlyCounts.forEach(h=>{
-    const col=document.createElement('div'); col.className='bar-col';
-    const wrap=document.createElement('div'); wrap.className='bar-wrap';
-    const bar=document.createElement('div'); bar.className='bar'+(h.count>=tp&&h.count>0?' bar-peak':'');
-    bar.dataset.count=h.count+' req'+(h.count!==1?'s':'');
-    bar.style.height=Math.max((h.count/mh)*120,h.count>0?4:0)+'px';
-    wrap.appendChild(bar);
-    const lbl=document.createElement('div'); lbl.className='bar-label'; lbl.textContent=h.label;
-    col.appendChild(wrap); col.appendChild(lbl); he.appendChild(col);
-  });
-  hs.appendChild(he);
-  if (hc2.every(c=>c===0)) {
-    const nd=document.createElement('div'); nd.style.cssText='color:#9ca3af;font-size:13px;margin-top:10px'; nd.textContent='No requests in this period.'; hs.appendChild(nd);
-  } else {
-    const leg=document.createElement('div'); leg.className='peak-legend';
-    leg.innerHTML='<div class="peak-legend-item"><div class="peak-legend-dot" style="background:#f59e0b"></div>Normal</div><div class="peak-legend-item"><div class="peak-legend-dot" style="background:#ef4444"></div>Peak (top 25%)</div>';
-    hs.appendChild(leg);
+  dcWrap.appendChild(dc);
+  // Average line
+  if (avgCount > 0) {
+    const BAR_CHART_H = 130; const BAR_CHART_PB = 30;
+    const lineTop = Math.round((BAR_CHART_H - BAR_CHART_PB) * (1 - avgCount/mc));
+    const avgLine = document.createElement('div'); avgLine.className='avg-line';
+    avgLine.style.top = lineTop + 'px';
+    const avgLbl  = document.createElement('div'); avgLbl.className='avg-line-label';
+    avgLbl.textContent = 'Avg ' + avgCount.toFixed(1) + '/day';
+    avgLine.appendChild(avgLbl); dcWrap.appendChild(avgLine);
   }
-  panel.appendChild(hs);
+  // Legend
+  const dailyLeg = document.createElement('div'); dailyLeg.className='peak-legend'; dailyLeg.style.marginTop='10px';
+  dailyLeg.innerHTML='<div class="peak-legend-item"><div class="peak-legend-dot" style="background:var(--blue)"></div>Standard</div><div class="peak-legend-item"><div class="peak-legend-dot" style="background:#0891b2"></div>Mobile</div>';
+  ds.appendChild(dcWrap); ds.appendChild(dailyLeg); paneOv.appendChild(ds);
+
+  // ── Day-of-week breakdown ────────────────────────────────
+  const dows = document.createElement('div'); dows.className='metrics-section';
+  dows.innerHTML='<div class="metrics-section-title">Requests by Day of Week <span class="metrics-section-sub">— '+period+'</span></div>';
+  const dowMax = Math.max(...data.dowCounts.map(d=>d.count), 1);
+  const dowHasData = data.dowCounts.some(d=>d.count>0);
+  if (dowHasData) {
+    const dowWrap = document.createElement('div'); dowWrap.style.cssText='display:flex;gap:10px;align-items:flex-end;height:120px;margin-top:8px;';
+    const DOW_COLORS = {Sun:'#ef4444',Mon:'#3b82f6',Tue:'#3b82f6',Wed:'#3b82f6',Thu:'#3b82f6',Fri:'#3b82f6',Sat:'#f59e0b'};
+    data.dowCounts.forEach(d => {
+      const col = document.createElement('div'); col.className='chart-bar-col';
+      col.style.cssText='flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;height:100%;justify-content:flex-end;cursor:pointer;';
+      const baseColor = DOW_COLORS[d.day]||'#3b82f6';
+      const std2 = d.count-(d.mobile||0);
+      const ttRows = [{label:d.day+' total',val:d.count+' req'+(d.count!==1?'s':''),color:'#6366f1'}];
+      if (std2>0) ttRows.push({label:'Standard',val:std2,color:baseColor});
+      if ((d.mobile||0)>0) ttRows.push({label:'Mobile',val:d.mobile,color:'#0891b2'});
+      col.dataset.tt = JSON.stringify(ttRows);
+      const totalH = Math.max(Math.round((d.count/dowMax)*90), d.count>0?4:0);
+      const mobileH = d.count>0 ? Math.round((d.mobile||0)/d.count*totalH) : 0;
+      const stdH = totalH - mobileH;
+      const countLbl = document.createElement('div'); countLbl.style.cssText='font-size:12px;font-weight:700;color:#374151;';
+      countLbl.textContent = d.count || '';
+      const barWrap2 = document.createElement('div'); barWrap2.style.cssText='width:100%;display:flex;flex-direction:column;align-items:stretch;';
+      if (mobileH > 0) {
+        const mbar = document.createElement('div');
+        mbar.style.cssText='height:'+mobileH+'px;background:#0891b2;border-radius:6px 6px 0 0;';
+        barWrap2.appendChild(mbar);
+      }
+      const sbar = document.createElement('div');
+      sbar.style.cssText='height:'+stdH+'px;background:'+baseColor+';'+(mobileH>0?'border-radius:0;':'border-radius:6px 6px 0 0;');
+      barWrap2.appendChild(sbar);
+      const dayLbl = document.createElement('div'); dayLbl.style.cssText='font-size:11px;font-weight:700;color:#9ca3af;';
+      dayLbl.textContent = d.day;
+      col.appendChild(countLbl); col.appendChild(barWrap2); col.appendChild(dayLbl);
+      dowWrap.appendChild(col);
+    });
+    const dowLeg = document.createElement('div'); dowLeg.className='peak-legend'; dowLeg.style.marginTop='10px';
+    dowLeg.innerHTML='<div class="peak-legend-item"><div class="peak-legend-dot" style="background:#3b82f6"></div>Standard</div><div class="peak-legend-item"><div class="peak-legend-dot" style="background:#0891b2"></div>Mobile</div>';
+    dows.appendChild(dowWrap); dows.appendChild(dowLeg);
+  } else {
+    dows.innerHTML+='<div style="color:#6b7280;font-size:14px;padding:10px 0">No data in this period.</div>';
+  }
+  paneOv.appendChild(dows);
+
+  // ── Peak Hours bar chart (filterable type + time range) ──
+  const phSec = document.createElement('div'); phSec.className='metrics-section';
+  phSec.innerHTML='<div class="metrics-section-title">Peak Hours <span class="metrics-section-sub" id="ph-sub-label">12am–11pm EST — '+period+'</span></div>';
+
+  const phOpts = [
+    {key:'all', label:'All', color:'#6366f1'},
+  ];
+  const phTimeRanges = [
+    {key:'all',       label:'All Day',   start:0,  end:23},
+    {key:'morning',   label:'Morning',   start:6,  end:11},
+    {key:'afternoon', label:'Afternoon', start:12, end:17},
+    {key:'evening',   label:'Evening',   start:18, end:23},
+    {key:'overnight', label:'Overnight', start:0,  end:5},
+    {key:'custom',    label:'Custom',    start:0,  end:23},
+  ];
+  let phActive = 'all';
+  let phTimeKey = 'all';
+  let phCustomStart = 0, phCustomEnd = 23;
+
+  const phChartWrap = document.createElement('div');
+
+  // ── time range row ──
+  const phTimeRow = document.createElement('div');
+  phTimeRow.style.cssText='display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:14px;';
+
+  // custom time inputs (hidden by default)
+  const phCustomWrap = document.createElement('div');
+  phCustomWrap.style.cssText='display:none;align-items:center;gap:6px;margin-left:4px;';
+  phCustomWrap.innerHTML=''
+    +'<label style="font-size:11px;font-weight:700;color:#6b7280;">From</label>'
+    +'<select id="ph-from" style="padding:3px 8px;border-radius:8px;border:1.5px solid #e5e7eb;font-size:12px;font-weight:600;cursor:pointer;outline:none;"></select>'
+    +'<label style="font-size:11px;font-weight:700;color:#6b7280;">To</label>'
+    +'<select id="ph-to"   style="padding:3px 8px;border-radius:8px;border:1.5px solid #e5e7eb;font-size:12px;font-weight:600;cursor:pointer;outline:none;"></select>';
+
+  // Populate custom selects
+  function populateCustomSelects() {
+    const fromSel = phCustomWrap.querySelector('#ph-from');
+    const toSel   = phCustomWrap.querySelector('#ph-to');
+    [fromSel, toSel].forEach((sel, idx) => {
+      sel.innerHTML = '';
+      for (let h=0; h<=23; h++) {
+        const lbl = h===0?'12am':h<12?h+'am':h===12?'12pm':(h-12)+'pm';
+        const opt = document.createElement('option'); opt.value=h; opt.textContent=lbl; sel.appendChild(opt);
+      }
+      sel.value = idx===0 ? phCustomStart : phCustomEnd;
+    });
+    fromSel.onchange = () => { phCustomStart=parseInt(fromSel.value); renderPhChart(); };
+    toSel.onchange   = () => { phCustomEnd  =parseInt(toSel.value);   renderPhChart(); };
+  }
+  populateCustomSelects();
+
+  function updatePhSubLabel() {
+    const el = document.getElementById('ph-sub-label');
+    if (!el) return;
+    let timeStr;
+    if (phTimeKey==='custom') {
+      const f=phCustomStart===0?'12am':phCustomStart<12?phCustomStart+'am':phCustomStart===12?'12pm':(phCustomStart-12)+'pm';
+      const t=phCustomEnd===0?'12am':phCustomEnd<12?phCustomEnd+'am':phCustomEnd===12?'12pm':(phCustomEnd-12)+'pm';
+      timeStr=f+' – '+t;
+    } else {
+      const tr=phTimeRanges.find(r=>r.key===phTimeKey);
+      const f=tr.start===0?'12am':tr.start<12?tr.start+'am':tr.start===12?'12pm':(tr.start-12)+'pm';
+      const t=tr.end  ===0?'12am':tr.end  <12?tr.end  +'am':tr.end  ===12?'12pm':(tr.end  -12)+'pm';
+      timeStr=f+' – '+t;
+    }
+    el.textContent=timeStr+' EST — '+period;
+  }
+
+  function renderPhChart() {
+    phChartWrap.innerHTML = '';
+    updatePhSubLabel();
+    const tr = phTimeRanges.find(r=>r.key===phTimeKey)||phTimeRanges[0];
+    const start = phTimeKey==='custom' ? phCustomStart : tr.start;
+    const end   = phTimeKey==='custom' ? phCustomEnd   : tr.end;
+    const pts = data.hourlyCounts.filter(p => end>=start ? (p.hour>=start && p.hour<=end) : (p.hour>=start || p.hour<=end));
+
+    const vals = pts.map(p => {
+      if (phActive==='all')      return p.count;
+      if (phActive==='normal')   return p.normal||0;
+      if (phActive==='waiter')   return p.waiter||0;
+      if (phActive==='consumer') return p.consumer||0;
+      if (phActive==='fleet')    return p.fleet||0;
+      return p.count;
+    });
+    const maxV = Math.max(...vals, 1);
+    const color = phOpts.find(o=>o.key===phActive).color;
+
+    const chartDiv = document.createElement('div');
+    chartDiv.style.cssText='display:flex;align-items:flex-end;gap:3px;height:180px;padding-bottom:32px;position:relative;';
+
+    pts.forEach(p => {
+      const v = vals[pts.indexOf(p)];
+      const barH = Math.max(Math.round((v/maxV)*110), v>0?3:0);
+      const col = document.createElement('div');
+      col.className='chart-bar-col';
+      col.style.cssText='flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:2px;height:100%;';
+      const ttRows = [{label:p.label+' total',val:p.count+' req'+(p.count!==1?'s':''),color:'#6366f1'}];
+      if((p.normal||0)>0)   ttRows.push({label:'Normal',   val:p.normal||0,   color:'#f59e0b'});
+      if((p.waiter||0)>0)   ttRows.push({label:'Waiter',   val:p.waiter||0,   color:'#b91c1c'});
+      if((p.consumer||0)>0) ttRows.push({label:'Consumer', val:p.consumer||0, color:'#0891b2'});
+      if((p.fleet||0)>0)    ttRows.push({label:'Fleet',    val:p.fleet||0,    color:'#7e22ce'});
+      col.dataset.tt = JSON.stringify(ttRows);
+      const bar = document.createElement('div');
+      bar.style.cssText='width:100%;border-radius:3px 3px 0 0;background:'+color+';height:'+barH+'px;min-height:'+(v>0?2:0)+'px;';
+      const lblWrap = document.createElement('div'); lblWrap.style.cssText='position:relative;width:100%;height:0;';
+      const lbl = document.createElement('div');
+      lbl.style.cssText='font-size:11px;color:#6b7280;font-weight:700;white-space:nowrap;position:absolute;bottom:-26px;left:50%;transform:translateX(-50%);';
+      lbl.textContent = p.label;
+      lblWrap.appendChild(lbl);
+      col.appendChild(bar); col.appendChild(lblWrap);
+      chartDiv.appendChild(col);
+    });
+    phChartWrap.appendChild(chartDiv);
+    if (vals.every(v=>v===0)) {
+      const nd = document.createElement('div'); nd.style.cssText='color:#9ca3af;font-size:13px;margin-top:8px;';
+      nd.textContent='No requests for this filter in this period.'; phChartWrap.appendChild(nd);
+    }
+  }
+
+  // Build time range pills
+  phTimeRanges.forEach(tr => {
+    const pill = document.createElement('button');
+    const isActive = phTimeKey===tr.key;
+    pill.style.cssText='padding:4px 12px;border-radius:999px;border:1.5px solid '+(isActive?'#374151':'#e5e7eb')+';background:'+(isActive?'#374151':'#fff')+';color:'+(isActive?'#fff':'#6b7280')+';font-size:11px;font-weight:700;cursor:pointer;transition:all 0.15s;';
+    pill.textContent = tr.label; pill.dataset.tkey = tr.key;
+    pill.onclick = () => {
+      phTimeKey = tr.key;
+      phCustomWrap.style.display = tr.key==='custom' ? 'flex' : 'none';
+      phTimeRow.querySelectorAll('button').forEach(b => {
+        const ia = b.dataset.tkey===phTimeKey;
+        b.style.background=ia?'#374151':'#fff'; b.style.color=ia?'#fff':'#6b7280'; b.style.borderColor=ia?'#374151':'#e5e7eb';
+      });
+      renderPhChart();
+    };
+    phTimeRow.appendChild(pill);
+  });
+  phTimeRow.appendChild(phCustomWrap);
+
+  renderPhChart();
+  phSec.appendChild(phTimeRow);
+  phSec.appendChild(phChartWrap);
+  paneOv.appendChild(phSec);
 
   // Two col: response times + advisor metrics
   const tc=document.createElement('div'); tc.className='metrics-two-col';
@@ -2127,7 +3002,8 @@ function renderMetrics(data) {
     const rg=document.createElement('div'); rg.className='rt-grid';
     [{label:'Average',value:fmtDur(rt.avg)},{label:'Median',value:fmtDur(rt.median)},{label:'Fastest',value:fmtDur(rt.min)},{label:'Slowest',value:fmtDur(rt.max)}].forEach(item=>{
       const el=document.createElement('div'); el.className='rt-item';
-      el.innerHTML='<div class="rt-label">'+item.label+'</div><div class="rt-value">'+item.value+'</div><div class="rt-unit">submission → done</div>';
+      const unit = (item.label.includes('Claim') || item.label.includes('Wait')) ? 'submit → in process' : 'submission → done';
+      el.innerHTML='<div class="rt-label">'+item.label+'</div><div class="rt-value">'+item.value+'</div><div class="rt-unit">'+unit+'</div>';
       rg.appendChild(el);
     });
     rts.appendChild(rg);
@@ -2149,7 +3025,7 @@ function renderMetrics(data) {
     ag.appendChild(ct2);
   });
   as.appendChild(ag); tc.appendChild(as);
-  panel.appendChild(tc);
+  paneOv.appendChild(tc);
 
   // By requester
   const qs=document.createElement('div'); qs.className='metrics-section';
@@ -2167,44 +3043,10 @@ function renderMetrics(data) {
   } else {
     qs.innerHTML+='<div style="color:#6b7280;font-size:14px;padding:10px 0">No data in this period.</div>';
   }
-  panel.appendChild(qs);
+  paneOv.appendChild(qs);
 
-  // By vehicle type
-  const vs=document.createElement('div'); vs.className='metrics-section';
-  vs.innerHTML='<div class="metrics-section-title">Requests by Vehicle Type <span class="metrics-section-sub">— '+period+'</span></div>';
-  const VEHICLE_COLORS = { EDV: '#065f46', R1: '#1d4ed8', R2: '#7e22ce' };
-  const VEHICLE_BG     = { EDV: '#ecfdf5', R1: '#eff6ff', R2: '#f3e8ff' };
-  const VEHICLE_BORDER = { EDV: '#a7f3d0', R1: '#bfdbfe', R2: '#e9d5ff' };
-  if (data.byVehicleType.length) {
-    const vg=document.createElement('div'); vg.style.cssText='display:flex;flex-wrap:wrap;gap:12px;margin-bottom:16px;';
-    const allVehicles = ['EDV','R1','R2'];
-    allVehicles.forEach(vtype => {
-      const found = data.byVehicleType.find(v=>v.type===vtype) || {type:vtype,total:0,completed:0,ordered:0};
-      const vc=document.createElement('div'); vc.className='stat-card';
-      vc.style.cssText='flex:1;min-width:120px;border-color:'+(VEHICLE_BORDER[vtype]||'#e5e7eb')+';background:'+(VEHICLE_BG[vtype]||'#f9fafb')+';';
-      vc.innerHTML='<div class="stat-label" style="color:'+(VEHICLE_COLORS[vtype]||'#374151')+'">'+vtype+'</div>'
-        +'<div class="stat-value" style="color:'+(VEHICLE_COLORS[vtype]||'#111827')+'">'+found.total+'</div>'
-        +'<div class="stat-sub">✓ '+found.completed+' completed &nbsp;📦 '+found.ordered+' ordered</div>';
-      vg.appendChild(vc);
-    });
-    vs.appendChild(vg);
-    // Bar chart
-    const vtMax=Math.max(...data.byVehicleType.map(v=>v.total),1);
-    const vtbl=document.createElement('table'); vtbl.className='req-table';
-    vtbl.innerHTML='<thead><tr><th>Vehicle</th><th>Total</th><th>Completed</th><th>Ordered</th><th>Pending</th></tr></thead>';
-    const vtb=document.createElement('tbody');
-    allVehicles.forEach(vtype => {
-      const found=data.byVehicleType.find(v=>v.type===vtype)||{type:vtype,total:0,completed:0,ordered:0};
-      const pending=found.total-found.completed-found.ordered;
-      const tr=document.createElement('tr');
-      tr.innerHTML='<td><div class="req-bar-wrap"><span style="min-width:50px;color:'+(VEHICLE_COLORS[vtype]||'#111827')+';font-weight:700">'+vtype+'</span><div class="req-bar-track"><div class="req-bar-fill" style="width:'+Math.round((found.total/vtMax)*100)+'%;background:'+(VEHICLE_COLORS[vtype]||'var(--blue)')+'"></div></div></div></td><td>'+found.total+'</td><td style="color:#16a34a">'+found.completed+'</td><td style="color:#9333ea">'+found.ordered+'</td><td style="color:#d97706">'+Math.max(pending,0)+'</td>';
-      vtb.appendChild(tr);
-    });
-    vtbl.appendChild(vtb); vs.appendChild(vtbl);
-  } else {
-    vs.innerHTML+='<div style="color:#6b7280;font-size:14px;padding:10px 0">No vehicle type data in this period. Make sure to select a Vehicle Type when submitting requests.</div>';
-  }
-  panel.appendChild(vs);
+  panel.appendChild(paneOv);
+
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -2214,13 +3056,18 @@ function switchTab(tab) {
   currentTab = tab;
   document.getElementById('tab-board').classList.toggle('active', tab==='board');
   document.getElementById('tab-metrics').classList.toggle('active', tab==='metrics');
+  const tvTab = document.getElementById('tab-tv');
+  if (tvTab) tvTab.classList.toggle('active', tab==='tv');
   document.getElementById('board-root').style.display = tab==='board' ? '' : 'none';
   document.getElementById('metrics-panel').classList.toggle('visible', tab==='metrics');
+  document.getElementById('tv-panel').classList.toggle('visible', tab==='tv');
+  document.body.classList.toggle('tv-mode', tab==='tv');
   document.getElementById('requester-filter')?.closest('.top-bar-left')?.querySelectorAll('.filter-label, #requester-filter').forEach(el=>{
     el.style.display = tab==='board' ? '' : 'none';
   });
   updateFab();
   if (tab==='metrics') loadMetrics();
+  if (tab==='tv') renderTvMode();
 }
 
 function onBoardClick() {
@@ -2228,9 +3075,11 @@ function onBoardClick() {
 }
 
 function updateFab() {
-  // Technicians and Advisors can submit requests — but must be logged in
   const fab = document.getElementById('new-request-fab');
-  fab.style.display = (currentTab === 'board' && currentUser) ? 'block' : 'none';
+  const mfab = document.getElementById('mobile-request-fab');
+  const show = (currentTab === 'board' && currentUser);
+  fab.style.display  = show ? 'block' : 'none';
+  if (mfab) mfab.style.display = show ? 'block' : 'none';
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -2346,6 +3195,7 @@ function submitLogin() {
 }
 
 function logout() {
+  if (currentTab === 'tv') switchTab('board');
   currentUser = null;
   currentRole = null;
   canEdit     = false;
@@ -2452,8 +3302,12 @@ function updateTopBarVisibility() {
   const reqLabel     = document.getElementById('requester-filter-label');
   const reqSelect    = document.getElementById('requester-filter');
 
-  // My Requests: visible to any logged-in user
-  if (myBtn) myBtn.style.display = currentUser ? 'inline-flex' : 'none';
+  // My Requests: visible to logged-in techs only (not advisors)
+  if (myBtn) myBtn.style.display = (currentUser && currentRole !== 'advisor') ? 'inline-flex' : 'none';
+
+  // TV Mode tab: advisors only
+  const tvTab = document.getElementById('tab-tv');
+  if (tvTab) tvTab.style.display = currentRole === 'advisor' ? '' : 'none';
 
   // Requester filter: advisors only
   const showReq = currentRole === 'advisor';
@@ -2475,9 +3329,16 @@ function updateTopBarVisibility() {
 
 function updatePageTitle() {
   const newCount = allRows.filter(r => r.status === 'New Request').length;
-  document.title = newCount > 0
-    ? '(' + newCount + ') Parts Request Dashboard'
-    : 'Parts Request Dashboard';
+  const inProcCount = allRows.filter(r => r.status === 'In Process').length;
+  const total = newCount + inProcCount;
+  if (total > 0) {
+    const parts = [];
+    if (newCount > 0)    parts.push(newCount + ' new');
+    if (inProcCount > 0) parts.push(inProcCount + ' in process');
+    document.title = '(' + parts.join(', ') + ') Parts Dashboard';
+  } else {
+    document.title = 'Parts Request Dashboard';
+  }
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -2635,6 +3496,440 @@ function applyZoom() {
 // ═══════════════════════════════════════════════════════════
 // BOOT
 // ═══════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════
+// TV MODE
+// ═══════════════════════════════════════════════════════════
+let tvClockTimer = null;
+
+function renderTvMode() {
+  const panel = document.getElementById('tv-panel');
+  panel.innerHTML = '';
+
+  const newRequests = allRows.filter(r => r.status === 'New Request')
+    .sort((a, b) => {
+      // Waiter/urgent first, then oldest first (longest waiting at top)
+      if (b.is_urgent && !a.is_urgent) return 1;
+      if (a.is_urgent && !b.is_urgent) return -1;
+      return (rowMs(a) || 0) - (rowMs(b) || 0);
+    });
+
+  // Header
+  const hdr = document.createElement('div'); hdr.className = 'tv-header';
+  const clock = document.createElement('div'); clock.className = 'tv-clock'; clock.id = 'tv-clock';
+  hdr.appendChild(clock);
+  panel.appendChild(hdr);
+
+  // Start clock
+  clearInterval(tvClockTimer);
+  function tickClock() {
+    const el = document.getElementById('tv-clock');
+    if (!el) { clearInterval(tvClockTimer); return; }
+    el.textContent = new Date().toLocaleTimeString('en-US', { timeZone: 'America/New_York', hour: 'numeric', minute: '2-digit', second: '2-digit', hour12: true });
+  }
+  tickClock();
+  tvClockTimer = setInterval(tickClock, 1000);
+
+  if (!newRequests.length) {
+    const empty = document.createElement('div'); empty.className = 'tv-empty';
+    empty.textContent = '✅ No pending requests';
+    panel.appendChild(empty);
+    return;
+  }
+
+  const grid = document.createElement('div'); grid.className = 'tv-grid';
+
+  newRequests.forEach(r => {
+    const card = document.createElement('div');
+    card.className = 'tv-card' + (r.is_urgent ? ' tv-urgent' : '');
+
+    // Top row: name + badges
+    const top = document.createElement('div'); top.className = 'tv-card-top';
+    const name = document.createElement('div'); name.className = 'tv-card-name';
+    name.textContent = r.submitted_by || '—';
+    top.appendChild(name);
+
+    const badges = document.createElement('div'); badges.className = 'tv-card-badges';
+    if (r.is_urgent) {
+      const wb = document.createElement('span'); wb.className = 'tv-waiter-badge'; wb.textContent = '🔴 Waiter';
+      badges.appendChild(wb);
+    }
+    const reqMs = rowMs(r);
+    if (reqMs) {
+      const ageMins = Math.floor((Date.now() - reqMs) / 60000);
+      const ab = document.createElement('span');
+      ab.className = 'tv-age-badge' + (ageMins >= 6 ? ' alert' : ageMins >= 3 ? ' warn' : '');
+      ab.dataset.requestedMs = reqMs;
+      ab.textContent = '⏱ ' + (fmtAge(reqMs) || 'Just now');
+      badges.appendChild(ab);
+    }
+    top.appendChild(badges);
+    card.appendChild(top);
+
+    // WO Link
+    if (r.wo_link) {
+      const wo = document.createElement('div'); wo.className = 'tv-wo';
+      const parts = String(r.wo_link).split(/[\n,]+/).map(s => s.trim()).filter(Boolean);
+      parts.forEach((p, i) => {
+        const m = p.match(/(WO-\d{9,})/);
+        const label = m ? m[1] : p;
+        if (i > 0) wo.appendChild(document.createTextNode('  '));
+        const a = document.createElement('a'); a.href = p; a.textContent = label;
+        a.style.cssText = 'color:var(--blue);text-decoration:none;';
+        a.target = '_blank'; a.rel = 'noopener noreferrer';
+        wo.appendChild(a);
+      });
+      card.appendChild(wo);
+    }
+
+    // Chips
+    const chips = document.createElement('div'); chips.className = 'tv-chips';
+    if (r.service_request) { const c = document.createElement('span'); c.className = 'tv-chip tv-chip-sr';      c.textContent = r.service_request; chips.appendChild(c); }
+    if (r.action)           { const c = document.createElement('span'); c.className = 'tv-chip tv-chip-action';  c.textContent = r.action;          chips.appendChild(c); }
+    if (r.deliver_parts)    { const c = document.createElement('span'); c.className = 'tv-chip tv-chip-deliver'; c.textContent = '📦 ' + r.deliver_parts; chips.appendChild(c); }
+    if (chips.children.length) card.appendChild(chips);
+
+    // Notes
+    if (r.notes && r.notes !== 'null' && r.notes.trim()) {
+      const notes = document.createElement('div'); notes.className = 'tv-notes';
+      notes.textContent = r.notes.trim();
+      card.appendChild(notes);
+    }
+
+    // Footer: time ago
+    if (reqMs) {
+      const footer = document.createElement('div'); footer.className = 'tv-footer';
+      footer.textContent = 'Submitted ' + fmtRelative(reqMs);
+      card.appendChild(footer);
+    }
+
+    grid.appendChild(card);
+  });
+
+  panel.appendChild(grid);
+}
+
+// ═══════════════════════════════════════════════════════════
+// PRIORITY TOGGLE LABEL
+// ═══════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════
+// DELIVER PARTS PRE-FILL
+// ═══════════════════════════════════════════════════════════
+function rememberBay() {
+  const delEl = document.getElementById('nr-deliver');
+  if (!delEl || !currentUser) return;
+  const val = delEl.value;
+  if (!val) { showToast('Select a bay first', 'error'); return; }
+  try {
+    localStorage.setItem('pref_bay_' + currentUser, val);
+    const lbl = document.getElementById('nr-deliver-remember');
+    if (lbl) lbl.textContent = '(saved ✓)';
+    showToast('Bay ' + val + ' saved as default');
+  } catch(e) {}
+}
+
+// ─── also update the save hint when delivery select changes ───
+document.addEventListener('change', function(e) {
+  if (e.target && e.target.id === 'nr-deliver') {
+    try {
+      const savedBay = localStorage.getItem('pref_bay_' + currentUser);
+      const lbl = document.getElementById('nr-deliver-remember');
+      if (lbl) lbl.textContent = e.target.value && e.target.value !== savedBay ? '(tap to save)' : savedBay ? '(saved)' : '';
+    } catch(e2) {}
+  }
+});
+
+// ═══════════════════════════════════════════════════════════
+// SOUND & NOTIFICATIONS
+// ═══════════════════════════════════════════════════════════
+function initSoundNotif() {
+  try {
+    soundEnabled         = localStorage.getItem('pref_sound') !== 'off';
+    notificationsEnabled = localStorage.getItem('pref_notif') === 'on';
+  } catch(e) {}
+  updateSoundNotifBtn();
+}
+
+function updateSoundNotifBtn() {
+  const btn = document.getElementById('sound-notif-btn');
+  if (!btn) return;
+  const on = soundEnabled || notificationsEnabled;
+  btn.classList.toggle('enabled', on);
+  btn.textContent = on ? '🔔 Sound: On' : '🔕 Sound: Off';
+}
+
+function toggleSoundNotif() {
+  const turnOn = !soundEnabled;
+  soundEnabled = turnOn;
+  try { localStorage.setItem('pref_sound', turnOn ? 'on' : 'off'); } catch(e) {}
+  // Request browser notification permission when turning on
+  if (turnOn && 'Notification' in window && Notification.permission !== 'denied') {
+    Notification.requestPermission().then(p => {
+      notificationsEnabled = (p === 'granted');
+      try { localStorage.setItem('pref_notif', notificationsEnabled ? 'on' : 'off'); } catch(e) {}
+      updateSoundNotifBtn();
+    });
+  } else {
+    if (!turnOn) { notificationsEnabled = false; try { localStorage.setItem('pref_notif','off'); } catch(e) {} }
+    updateSoundNotifBtn();
+  }
+}
+
+function playChime(type) {
+  if (!soundEnabled) return;
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain); gain.connect(ctx.destination);
+    if (type === 'urgent') {
+      // Two-tone urgent alarm
+      osc.frequency.setValueAtTime(880, ctx.currentTime);
+      osc.frequency.setValueAtTime(660, ctx.currentTime + 0.15);
+      osc.frequency.setValueAtTime(880, ctx.currentTime + 0.30);
+      gain.gain.setValueAtTime(0.25, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
+      osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.5);
+    } else {
+      // Soft single chime
+      osc.frequency.setValueAtTime(660, ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.08);
+      gain.gain.setValueAtTime(0.18, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
+      osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.4);
+    }
+  } catch(e) {}
+}
+
+function fireNewRequestAlert(rec) {
+  if (!currentUser) return;
+  // Advisors get alerted for new requests
+  if (currentRole !== 'advisor') return;
+  const isUrgent = !!rec.is_urgent;
+  playChime(isUrgent ? 'urgent' : 'chime');
+  if ('Notification' in window && Notification.permission === 'granted' && notificationsEnabled) {
+    const title = isUrgent ? '🔴 URGENT Parts Request' : '🔔 New Parts Request';
+    const body  = (rec.submitted_by || 'Someone') + ' needs parts' + (rec.wo_link ? ' — ' + String(rec.wo_link).split(/[\n,]+/)[0].trim() : '');
+    try {
+      const n = new Notification(title, { body, tag: 'req-' + rec.id });
+      setTimeout(() => n.close(), 8000);
+    } catch(e) {}
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+// OFFLINE DETECTION
+// ═══════════════════════════════════════════════════════════
+function markOnline() {
+  if (!isOnline) {
+    isOnline = true;
+    document.getElementById('offline-banner').classList.remove('show');
+    showToast('✅ Reconnected');
+    fetchAll().then(() => { renderBoard(); buildRequesterFilter(); });
+  }
+  lastUpdateMs = Date.now();
+  updateLastUpdateLabel();
+}
+
+function markOffline() {
+  if (isOnline) {
+    isOnline = false;
+    document.getElementById('offline-banner').classList.add('show');
+  }
+  updateLastUpdateLabel();
+}
+
+function updateLastUpdateLabel() {
+  const el = document.getElementById('offline-last-update');
+  if (!el || !lastUpdateMs) return;
+  const s = Math.round((Date.now() - lastUpdateMs) / 1000);
+  el.textContent = s < 60 ? 'Last update: ' + s + 's ago' : 'Last update: ' + Math.round(s/60) + 'm ago';
+}
+
+function reconnectSupabase() {
+  const btn = document.getElementById('offline-reconnect-btn');
+  if (btn) { btn.textContent = 'Reconnecting…'; btn.disabled = true; }
+  fetchAll()
+    .then(() => {
+      markOnline();
+      setupRealtime();
+      renderBoard();
+    })
+    .catch(() => {
+      if (btn) { btn.textContent = 'Reconnect'; btn.disabled = false; }
+      showToast('Still offline — check your connection', 'error');
+    });
+}
+
+// ═══════════════════════════════════════════════════════════
+// MOBILE REQUEST MODAL
+// ═══════════════════════════════════════════════════════════
+let mrVtype = 'consumer';
+
+function openMobileModal() {
+  if (!currentUser) { showToast('Please log in to submit a request', 'error'); openLoginModal(); return; }
+  mrVtype = 'consumer';
+  document.getElementById('mr-tab-consumer').classList.add('active');
+  document.getElementById('mr-tab-fleet').classList.remove('active');
+  document.getElementById('mr-dsp-field').style.display = 'none';
+  document.getElementById('mr-dsp').value = '';
+  document.getElementById('mr-date').value = todayEst();
+  document.getElementById('mr-notes').value = '';
+  // Reset WO list to single empty field
+  const list = document.getElementById('mr-wo-list');
+  list.innerHTML = '<div class="mr-wo-row"><input type="text" class="mr-wo-input" placeholder="https://… or WO-000000000" autocomplete="off"></div>';
+  // Auto-format WO on blur
+  list.querySelectorAll('.mr-wo-input').forEach(attachWoFormat);
+  document.getElementById('mr-submitted-by').value = currentUser;
+  document.getElementById('mr-submitted-by-display').textContent = currentUser;
+  document.getElementById('mr-submit-status').textContent = '';
+  document.getElementById('mr-submit-status').className = '';
+  const btn = document.getElementById('mr-submit-btn');
+  btn.disabled = false; btn.textContent = 'Submit Request';
+  delete btn.dataset.dupConfirmed;
+  document.getElementById('mr-backdrop').classList.remove('open');
+  document.getElementById('mr-backdrop2') && document.getElementById('mr-backdrop2').classList.remove('open');
+  document.getElementById('mr-backdrop').classList.remove('open');
+  document.getElementById('mr-backdrop').style.display='';
+  document.getElementById('mr-backdrop').classList.add('open');
+  setTimeout(() => {
+    const first = document.querySelector('#mr-wo-list .mr-wo-input');
+    if (first) first.focus();
+  }, 120);
+}
+
+function closeMobileModal() {
+  document.getElementById('mr-backdrop').classList.remove('open');
+}
+
+function setMrVtype(type) {
+  mrVtype = type;
+  document.getElementById('mr-tab-consumer').classList.toggle('active', type === 'consumer');
+  document.getElementById('mr-tab-fleet').classList.toggle('active', type === 'fleet');
+  document.getElementById('mr-dsp-field').style.display = type === 'fleet' ? '' : 'none';
+}
+
+function attachWoFormat(input) {
+  input.addEventListener('blur', function() {
+    const v = this.value.trim();
+    if (/^\d{9,}$/.test(v)) this.value = 'WO-' + v;
+    else { const m = v.match(/^WO(\d{9,})$/i); if (m) this.value = 'WO-' + m[1]; }
+  });
+}
+
+function addMrWoField() {
+  const list = document.getElementById('mr-wo-list');
+  if (list.children.length >= 10) { showToast('Maximum 10 WOs per request', 'error'); return; }
+  const row = document.createElement('div'); row.className = 'mr-wo-row';
+  const input = document.createElement('input');
+  input.type = 'text'; input.className = 'mr-wo-input';
+  input.placeholder = 'https://… or WO-000000000'; input.autocomplete = 'off';
+  attachWoFormat(input);
+  const removeBtn = document.createElement('button'); removeBtn.className = 'mr-wo-remove';
+  removeBtn.textContent = '✕'; removeBtn.title = 'Remove';
+  removeBtn.onclick = () => row.remove();
+  row.appendChild(input); row.appendChild(removeBtn);
+  list.appendChild(row);
+  input.focus();
+}
+
+async function submitMobileRequest() {
+  const statusEl = document.getElementById('mr-submit-status');
+  const submitBtn = document.getElementById('mr-submit-btn');
+  const submittedBy = document.getElementById('mr-submitted-by').value.trim();
+  const apptDate = document.getElementById('mr-date').value;
+  const dsp = document.getElementById('mr-dsp').value;
+  const notes = document.getElementById('mr-notes').value.trim();
+
+  // Collect WOs
+  const woInputs = Array.from(document.querySelectorAll('#mr-wo-list .mr-wo-input'));
+  const wos = woInputs.map(i => i.value.trim()).filter(Boolean);
+
+  // Validation
+  if (!submittedBy) { statusEl.textContent = 'You must be logged in.'; statusEl.className = 'error'; return; }
+  if (!apptDate)    { statusEl.textContent = 'Date of appointment is required.'; statusEl.className = 'error'; return; }
+  if (mrVtype === 'fleet' && !dsp) { statusEl.textContent = 'DSP Location is required for Fleet.'; statusEl.className = 'error'; return; }
+  if (!wos.length)  { statusEl.textContent = 'At least one WO Link is required.'; statusEl.className = 'error'; return; }
+
+  submitBtn.disabled = true;
+  submitBtn.innerHTML = '<span class="nr-spinner"></span> Submitting…';
+  statusEl.textContent = ''; statusEl.className = '';
+
+  try {
+    const payload = {
+      wo_link:         wos.join(', '),
+      submitted_by:    submittedBy,
+      notes:           notes,
+      status:          'New Request',
+      request_type:    'mobile',
+      mobile_vtype:    mrVtype,
+      dsp_location:    mrVtype === 'fleet' ? dsp : null,
+      appt_date:       apptDate,
+      is_urgent:       false
+    };
+
+    const newRow = await insertRequest(payload);
+    if (newRow && !allRows.find(r => r.id === newRow.id)) {
+      allRows = [newRow, ...allRows];
+      renderBoard();
+      buildRequesterFilter();
+      updatePageTitle();
+    }
+
+    submitBtn.innerHTML = '✓ Submitted!';
+    statusEl.textContent = 'Mobile request added.'; statusEl.className = 'success';
+    showToast('📱 Mobile request submitted!');
+    setTimeout(closeMobileModal, 900);
+    setTimeout(showSubmitConfirm, 1000);
+  } catch(err) {
+    submitBtn.disabled = false; submitBtn.textContent = 'Submit Request';
+    statusEl.textContent = 'Error: ' + err.message; statusEl.className = 'error';
+  }
+}
+
+// Close on backdrop click
+document.getElementById('mr-backdrop').addEventListener('click', e => {
+  if (e.target === document.getElementById('mr-backdrop')) closeMobileModal();
+});
+
+// ═══════════════════════════════════════════════════════════
+// CHART TOOLTIP
+// ═══════════════════════════════════════════════════════════
+(function() {
+  const tt = document.getElementById('chart-tooltip');
+  if (!tt) return;
+
+  document.addEventListener('mousemove', function(e) {
+    if (tt.classList.contains('show')) {
+      let x = e.clientX + 14, y = e.clientY - 10;
+      const w = tt.offsetWidth, h = tt.offsetHeight;
+      if (x + w > window.innerWidth - 10) x = e.clientX - w - 14;
+      if (y + h > window.innerHeight - 10) y = e.clientY - h - 10;
+      tt.style.left = x + 'px';
+      tt.style.top  = y + 'px';
+    }
+  });
+
+  document.addEventListener('mouseover', function(e) {
+    const col = e.target.closest('[data-tt]');
+    if (!col) { tt.classList.remove('show'); return; }
+    const rows = JSON.parse(col.dataset.tt);
+    tt.innerHTML = rows.map(r =>
+      '<div class="chart-tooltip-row">'
+      + '<div class="chart-tooltip-dot" style="background:'+r.color+'"></div>'
+      + '<span class="chart-tooltip-label">'+r.label+'</span>'
+      + '<span class="chart-tooltip-val">'+r.val+'</span>'
+      + '</div>'
+    ).join('');
+    tt.classList.add('show');
+  });
+
+  document.addEventListener('mouseout', function(e) {
+    if (!e.relatedTarget || !e.relatedTarget.closest('[data-tt]')) {
+      tt.classList.remove('show');
+    }
+  });
+})();
+
 window.addEventListener('load', function() {
   // Date init
   const today = todayEst();
@@ -2669,7 +3964,17 @@ window.addEventListener('load', function() {
 
   // Timers
   setInterval(updateAgeTimers, 30000);
+  setInterval(() => {
+    if (!isOnline) updateLastUpdateLabel();
+    // Heartbeat: ping Supabase every 30s and mark online/offline
+    if (sbClient) {
+      sbClient.from('parts_requests').select('id').limit(1)
+        .then(r => { if (r.error) markOffline(); else markOnline(); })
+        .catch(() => markOffline());
+    }
+  }, 30000);
   updateFab();
+  initSoundNotif();
 });
 </script>
 </body>

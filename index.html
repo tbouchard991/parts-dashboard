@@ -355,6 +355,7 @@
     .chip-secondary { background: #dbeafe; color: #075985; }
     .chip-action    { background: #fee2e2; color: #b91c1c; }
     .chip-deliver   { background: #fef9c3; color: #854d0e; }
+    .chip-vehicle   { background: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0; }
 
     .small-row { font-size: 13px; color: #4b5563; }
     .label-inline { font-weight: 700; color: var(--text-sub); margin-right: 4px; text-transform: uppercase; font-size: 11px; letter-spacing: 0.08em; }
@@ -876,6 +877,15 @@
       </div>
       <div class="nr-two-col">
         <div class="nr-field">
+          <label class="nr-label" for="nr-vehicle-type">Vehicle Type <span class="nr-required">*</span></label>
+          <select id="nr-vehicle-type" class="nr-select">
+            <option value="">— Select —</option>
+            <option value="EDV">EDV</option>
+            <option value="R1">R1</option>
+            <option value="R2">R2</option>
+          </select>
+        </div>
+        <div class="nr-field">
           <label class="nr-label" for="nr-action">Action</label>
           <select id="nr-action" class="nr-select">
             <option value="">— Select —</option>
@@ -884,6 +894,8 @@
             <option>Parts Inquiry</option>
           </select>
         </div>
+      </div>
+      <div class="nr-two-col">
         <div class="nr-field">
           <label class="nr-label" for="nr-deliver">Deliver Parts</label>
           <select id="nr-deliver" class="nr-select">
@@ -894,6 +906,7 @@
             <option>Bay 4</option><option>Bay 5</option><option>Bay 6</option><option>Bay 7</option>
           </select>
         </div>
+      </div>
       </div>
       <div class="nr-field">
         <label class="nr-label" for="nr-notes">Notes</label>
@@ -1418,6 +1431,7 @@ function buildCard(r) {
 
   // Chips
   const meta = document.createElement('div'); meta.className = 'meta-row';
+  if (r.vehicle_type)      { const c=document.createElement('span'); c.className='chip chip-vehicle';    c.textContent='🚗 '+r.vehicle_type;      meta.appendChild(c); }
   if (r.service_request) { const c=document.createElement('span'); c.className='chip chip-secondary'; c.textContent=r.service_request; meta.appendChild(c); }
   if (r.action)           { const c=document.createElement('span'); c.className='chip chip-action';    c.textContent=r.action;          meta.appendChild(c); }
   if (r.deliver_parts)    { const c=document.createElement('span'); c.className='chip chip-deliver';   c.textContent='Deliver: '+r.deliver_parts; meta.appendChild(c); }
@@ -1840,7 +1854,7 @@ function updateAgeTimers() {
 function openModal() {
   if (!currentUser) { showToast('Please log in to submit a request', 'error'); openLoginModal(); return; }
   ['nr-wo-link','nr-notes'].forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
-  ['nr-action','nr-deliver'].forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
+  ['nr-action','nr-deliver','nr-vehicle-type'].forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
   document.querySelectorAll('input[name="nr-sr"]').forEach(cb => cb.checked = false);
   // Autofill submitted-by from session
   document.getElementById('nr-submitted-by').value = currentUser;
@@ -1874,6 +1888,7 @@ async function submitRequest() {
     const newRow = await insertRequest({
       wo_link:         woLink,
       service_request: srs,
+      vehicle_type:    document.getElementById('nr-vehicle-type').value,
       action:          document.getElementById('nr-action').value,
       deliver_parts:   document.getElementById('nr-deliver').value,
       notes:           document.getElementById('nr-notes').value.trim(),
@@ -1930,7 +1945,7 @@ function computeMetrics(rows, startMs, endMs) {
   }
 
   const ADVISOR_NAMES = Object.keys(ADVISOR_PASSWORDS);
-  const respMins=[], userRespMins={}, reqMap={};
+  const respMins=[], userRespMins={}, reqMap={}, vtMap={};
   ADVISOR_NAMES.forEach(n => userRespMins[n] = []);
   let completedToday=0, totalFiltered=0;
 
@@ -1975,6 +1990,15 @@ function computeMetrics(rows, startMs, endMs) {
       if (r.status==='Completed') reqMap[sub].completed++;
       if (r.status==='Ordered')   reqMap[sub].ordered++;
     }
+
+    // By vehicle type
+    const vt = (r.vehicle_type||'').trim();
+    if (vt) {
+      if (!vtMap[vt]) vtMap[vt]={type:vt,total:0,completed:0,ordered:0};
+      vtMap[vt].total++;
+      if (r.status==='Completed') vtMap[vt].completed++;
+      if (r.status==='Ordered')   vtMap[vt].ordered++;
+    }
   });
 
   let rt={avg:null,min:null,max:null,median:null,count:0};
@@ -2012,6 +2036,7 @@ function computeMetrics(rows, startMs, endMs) {
     dailyCounts: Object.values(dailyMap),
     hourlyCounts: Object.values(hourlyMap),
     byRequester: Object.values(reqMap).sort((a,b)=>b.total-a.total).slice(0,20),
+    byVehicleType: Object.values(vtMap).sort((a,b)=>b.total-a.total),
     userAvgResponse: userAvg,
     userTotals
   };
@@ -2143,6 +2168,43 @@ function renderMetrics(data) {
     qs.innerHTML+='<div style="color:#6b7280;font-size:14px;padding:10px 0">No data in this period.</div>';
   }
   panel.appendChild(qs);
+
+  // By vehicle type
+  const vs=document.createElement('div'); vs.className='metrics-section';
+  vs.innerHTML='<div class="metrics-section-title">Requests by Vehicle Type <span class="metrics-section-sub">— '+period+'</span></div>';
+  const VEHICLE_COLORS = { EDV: '#065f46', R1: '#1d4ed8', R2: '#7e22ce' };
+  const VEHICLE_BG     = { EDV: '#ecfdf5', R1: '#eff6ff', R2: '#f3e8ff' };
+  const VEHICLE_BORDER = { EDV: '#a7f3d0', R1: '#bfdbfe', R2: '#e9d5ff' };
+  if (data.byVehicleType.length) {
+    const vg=document.createElement('div'); vg.style.cssText='display:flex;flex-wrap:wrap;gap:12px;margin-bottom:16px;';
+    const allVehicles = ['EDV','R1','R2'];
+    allVehicles.forEach(vtype => {
+      const found = data.byVehicleType.find(v=>v.type===vtype) || {type:vtype,total:0,completed:0,ordered:0};
+      const vc=document.createElement('div'); vc.className='stat-card';
+      vc.style.cssText='flex:1;min-width:120px;border-color:'+(VEHICLE_BORDER[vtype]||'#e5e7eb')+';background:'+(VEHICLE_BG[vtype]||'#f9fafb')+';';
+      vc.innerHTML='<div class="stat-label" style="color:'+(VEHICLE_COLORS[vtype]||'#374151')+'">'+vtype+'</div>'
+        +'<div class="stat-value" style="color:'+(VEHICLE_COLORS[vtype]||'#111827')+'">'+found.total+'</div>'
+        +'<div class="stat-sub">✓ '+found.completed+' completed &nbsp;📦 '+found.ordered+' ordered</div>';
+      vg.appendChild(vc);
+    });
+    vs.appendChild(vg);
+    // Bar chart
+    const vtMax=Math.max(...data.byVehicleType.map(v=>v.total),1);
+    const vtbl=document.createElement('table'); vtbl.className='req-table';
+    vtbl.innerHTML='<thead><tr><th>Vehicle</th><th>Total</th><th>Completed</th><th>Ordered</th><th>Pending</th></tr></thead>';
+    const vtb=document.createElement('tbody');
+    allVehicles.forEach(vtype => {
+      const found=data.byVehicleType.find(v=>v.type===vtype)||{type:vtype,total:0,completed:0,ordered:0};
+      const pending=found.total-found.completed-found.ordered;
+      const tr=document.createElement('tr');
+      tr.innerHTML='<td><div class="req-bar-wrap"><span style="min-width:50px;color:'+(VEHICLE_COLORS[vtype]||'#111827')+';font-weight:700">'+vtype+'</span><div class="req-bar-track"><div class="req-bar-fill" style="width:'+Math.round((found.total/vtMax)*100)+'%;background:'+(VEHICLE_COLORS[vtype]||'var(--blue)')+'"></div></div></div></td><td>'+found.total+'</td><td style="color:#16a34a">'+found.completed+'</td><td style="color:#9333ea">'+found.ordered+'</td><td style="color:#d97706">'+Math.max(pending,0)+'</td>';
+      vtb.appendChild(tr);
+    });
+    vtbl.appendChild(vtb); vs.appendChild(vtbl);
+  } else {
+    vs.innerHTML+='<div style="color:#6b7280;font-size:14px;padding:10px 0">No vehicle type data in this period. Make sure to select a Vehicle Type when submitting requests.</div>';
+  }
+  panel.appendChild(vs);
 }
 
 // ═══════════════════════════════════════════════════════════
